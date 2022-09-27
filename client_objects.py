@@ -1,4 +1,4 @@
-from base_objects import Base_message
+from base_objects import Base_message, Ok_response
 import json
 
 def check(it):
@@ -6,8 +6,10 @@ def check(it):
     # print(f'json decode {it}')
     j_di = json.loads(it)
     di = dict(j_di)
-    if di['action'] == 'serv_response':
+    if di['action'] == 'echo':
         print(f'Ответ с сервера: {di["message"]} ')  # di {di}
+    elif di['action'] == 'ping':
+        print(f'Cтатус проверки связи {di["status"]}')
 
 
 # ok = { 
@@ -90,12 +92,15 @@ def check(it):
 #     return di
 
 
+class ping_server(Ok_response):
 
+    def chose_message_type(self):
+        return 'ping'
 
         
 
 
-class echo(Base_message):
+class echo(Ok_response):
 
     def chose_message_type(self):
         return 'echo'

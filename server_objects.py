@@ -1,28 +1,34 @@
 import json
-from base_objects import Base_message
+from base_objects import Base_message, Ok_response
 
-class Response(Base_message):
+class Response(Ok_response):
     def chose_message_type(self):
-        return 'serv_response'
+        return 'ping'
+
+class Echo(Ok_response):
+    def chose_message_type(self):
+        return 'echo'
 
 def check(it):
+    
     it = it.decode('utf-8')
     # print(f'json decode {it}')
     j_di = json.loads(it)
     di = dict(j_di)
+    # print(f'server {di["action"]}')
     if di['action'] == 'echo':
-        return echo(di)
+        sr = Echo()
+        new_di = sr.run(msg=f'сервер переслал сообщение: {di["message"]}')
+        return True, new_di
+    elif di['action'] == 'ping':
+        sr = Response()
+        new_di = sr.run()
+        # print(f'di in server_objects {new_di}')
+        return True, new_di
 
-def echo(di):
-    # print(f'echo func {di}')
-    is_response = True
-    res = f'сервер переслал сообщение: {di["message"]}'
-    print(res)
-    sr = Response()
-    new_di = sr.run(res)
+
     
 
     
 
-    return is_response, new_di
 

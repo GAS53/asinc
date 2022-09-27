@@ -24,17 +24,17 @@ SOC.listen(5)
 
 while True:
     # try:
-        client, addr = SOC.accept()
-        print(f'соединение с {addr}')
-        while True:
-        # newsock = accept(s, clientaddr, clientaddrlen)
-        # Сокет, ассоциированный клиентом, и сокет, который был возвращен функцией accept, используются для установления связи между сервером и клиентом
-        res = client.recv(1024)
-        # print(f'res {res}')
-        # res = res.decode('utf-8')
-        is_send, it_send = check(res)
-        if is_send:
-            client.send(it_send)
-        client.close()
+    client, addr = SOC.accept()
+    print(f'соединение с {addr}')
+        # while True:
+            # newsock = accept(s, clientaddr, clientaddrlen)
+            # Сокет, ассоциированный клиентом, и сокет, который был возвращен функцией accept, используются для установления связи между сервером и клиентом
+    res = client.recv(1024)
+            # print(f'res {res}')
+            # res = res.decode('utf-8')
+    is_send, it_send = check(res)
+    if is_send:
+        client.send(it_send)
+    client.close()
     # except Exception as e:
     #     print(f'exept {e}')
