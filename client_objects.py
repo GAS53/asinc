@@ -1,10 +1,14 @@
-from base64 import decode
-import datetime
+from base_objects import Base_message
 import json
-import sys
-from abc import abstractclassmethod
 
-MESSAGE_TYPE = {"echo":'echo_msg'}
+def check(it):
+    it = it.decode('utf-8')
+    # print(f'json decode {it}')
+    j_di = json.loads(it)
+    di = dict(j_di)
+    if di['action'] == 'serv_response':
+        print(f'Ответ с сервера: {di["message"]} ')  # di {di}
+
 
 # ok = { 
 # "response": 200,
@@ -86,25 +90,7 @@ MESSAGE_TYPE = {"echo":'echo_msg'}
 #     return di
 
 
-class Base_message():
-    def __init__(self):
-        self.di = {}
-        self.di['time'] = datetime.datetime.now().strftime('%c')
-        self.di["action"] = self.chose_message_type()
-        self.di['error'] = None
-        self.di['im'] = sys.argv[0].split('/')[-1]
 
-    @abstractclassmethod
-    def chose_message_type(self):
-        print('необходимо выбрать тип сообщения в chose_message_type')
-
-
-    def run(self, msg):
-        if msg:
-            self.di['message'] = msg
-        j_di = json.dumps(self.di)
-        # print(j_di)
-        return j_di
 
         
 
@@ -116,11 +102,3 @@ class echo(Base_message):
 
 
 
-# us = User_server()
-# us.run()
-# print(datetime.datetime.now().strftime('%c'))    
-    
-
-
-# print(user_server('test'))
-# print(sys.argv[0].split('/')[-1])

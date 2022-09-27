@@ -1,4 +1,6 @@
 import socket
+from server_objects import check
+from props import HOST, PORT
 
 SOC = socket.socket()  # Создание сокета
 '''s = socket(domain, type, protocol)
@@ -12,8 +14,7 @@ SOC = socket.socket()  # Создание сокета
     '''
 
 
-HOST = socket.gethostname()
-PORT = 12345
+
 
 SOC.bind((HOST, PORT))  # Для связывания сокета с адресом и номером порта
 
@@ -22,13 +23,18 @@ SOC.listen(5)
     где s это дескриптор сокета, а qlength это максимальное количество запросов на установление связи, которые могут стоять в очереди, ожидая обработки сервером; это количество может быть ограничено особенностями системы'''
 
 while True:
-    client, addr = SOC.accept()
-    # newsock = accept(s, clientaddr, clientaddrlen)
-    # Сокет, ассоциированный клиентом, и сокет, который был возвращен функцией accept, используются для установления связи между сервером и клиентом
-    data = client.recv(1024)
-    res = data.decode('utf-8')
-    
-    print(f'Message {res}')
-    resp = f'Эхо ответ - {res}'
-    client.send(b'responce')
-    client.close()
+    # try:
+        client, addr = SOC.accept()
+        print(f'соединение с {addr}')
+        while True:
+        # newsock = accept(s, clientaddr, clientaddrlen)
+        # Сокет, ассоциированный клиентом, и сокет, который был возвращен функцией accept, используются для установления связи между сервером и клиентом
+        res = client.recv(1024)
+        # print(f'res {res}')
+        # res = res.decode('utf-8')
+        is_send, it_send = check(res)
+        if is_send:
+            client.send(it_send)
+        client.close()
+    # except Exception as e:
+    #     print(f'exept {e}')

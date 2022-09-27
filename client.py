@@ -1,16 +1,24 @@
 import socket
+import sys
 
-from client_objects import echo
+from client_objects import echo, check
+from props import HOST, PORT
+
 
 SOC = socket.socket()
-HOST = socket.gethostname()
-PORT = 12345
-IM = 'client_1'
+
 
 SOC.connect((HOST, PORT))
 
-msg = 'my message'
+if not sys.argv[1] == None:
+    msg = sys.argv[1]
+else:
+    msg = 'my message'
 
-SOC.send(echo.run(msg))
-print(SOC.recv(1024))
+
+echo_cl = echo()
+
+SOC.send(echo_cl.run(msg))
+recv = SOC.recv(1024)
+check(recv)
 SOC.close()
