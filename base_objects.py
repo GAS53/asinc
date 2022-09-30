@@ -35,3 +35,4 @@ class Base_message():
 class Ok_response(Base_message):
     def chose_status(self):
         return '200'
+

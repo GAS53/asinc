@@ -1,4 +1,4 @@
-from base_objects import Base_message, Ok_response
+from base_objects import Ok_response
 import json
 
 def check(it):
