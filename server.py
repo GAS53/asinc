@@ -2,39 +2,22 @@ import socket
 from server_objects import check
 from props import HOST, PORT
 
-SOC = socket.socket()  # Создание сокета
-'''s = socket(domain, type, protocol)
-    domain - AF_INET (Internet протоколы)
-    socket -
-    SOCK_STREAM - Этот тип обеспечивает последовательный, надежный, ориентированный на установление двусторонней связи поток байтов
-    SOCK_DGRAM - поддерживает двусторонний поток данных. Не гарантируется, что этот поток будет последовательным, надежным, и что данные не будут дублироваться. Важной характеристикой данного сокета является то, что границы записи данных предопределены.
-    Raw socket - обеспечивает возможность пользовательского доступа к низлежащим коммуникационным протоколам, поддерживающим сокет-абстракции. Такие сокеты обычно являются датаграм- ориентированными.
-     
-    s = socket(AF_INET, SOCK_STREAM, 0) Для создания сокета типа stream с протоколом TCP, обеспечивающим коммуникационную поддержку, вызов функции socket должен быть следующим:   
-    '''
 
+def main():
+    SOC = socket.socket()
 
+    SOC.bind((HOST, PORT))
+    SOC.listen(5)
 
+    while True:
 
-SOC.bind((HOST, PORT))  # Для связывания сокета с адресом и номером порта
+        client, addr = SOC.accept()
+        print(f'соединение с {addr}')
+        res = client.recv(1024)
+        it_send = check(res)
+        if it_send:
+            client.send(it_send)
+        client.close()
 
-SOC.listen(5)
-'''error = listen(s, qlength)
-    где s это дескриптор сокета, а qlength это максимальное количество запросов на установление связи, которые могут стоять в очереди, ожидая обработки сервером; это количество может быть ограничено особенностями системы'''
-
-while True:
-    # try:
-    client, addr = SOC.accept()
-    print(f'соединение с {addr}')
-        # while True:
-            # newsock = accept(s, clientaddr, clientaddrlen)
-            # Сокет, ассоциированный клиентом, и сокет, который был возвращен функцией accept, используются для установления связи между сервером и клиентом
-    res = client.recv(1024)
-            # print(f'res {res}')
-            # res = res.decode('utf-8')
-    is_send, it_send = check(res)
-    if is_send:
-        client.send(it_send)
-    client.close()
-    # except Exception as e:
-    #     print(f'exept {e}')
+if __name__=='__main__':
+    main()

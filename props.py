@@ -1,4 +1,4 @@
 import socket
 
 HOST = socket.gethostname()
-PORT = 12350
+PORT = 12354
