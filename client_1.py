@@ -6,6 +6,7 @@ from client_objects import check
 from props import HOST, PORT
 from base_objects import Ping, Echo
 
+IM = '123'  # id client
 
 def main():
 
@@ -16,7 +17,8 @@ def main():
 
     if len(sys.argv) == 1:
         # print('ping server')
-        ping_cl = Ping()
+        ping_cl = Ping(IM)
+        ping_cl.send_to('server')
         # print(ping_cl.run())
         SOC.send(ping_cl.run())
 
@@ -24,7 +26,8 @@ def main():
         msg = sys.argv[1]
         # print(f'echo server {msg}')
         
-        echo_cl = Echo()
+        echo_cl = Echo(IM)
+        echo_cl.send_to('server')
         # print(echo_cl.run(msg))
         SOC.send(echo_cl.run(msg))
         

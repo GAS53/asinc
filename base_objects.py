@@ -64,6 +64,7 @@ class Ok_response(Base_message):
 class Ping(Ok_response):
     def chose_message_type(self):
         return 'ping'
+    
 
 class Echo(Ok_response):
     def chose_message_type(self):
@@ -84,7 +85,7 @@ class User_user(Ok_response):
 
 class User_chat(Ok_response):
     def chose_message_type(self):
-        return f'user_chat'
+        return 'user_chat'
 
 
 

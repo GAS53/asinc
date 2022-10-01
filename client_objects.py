@@ -39,16 +39,7 @@ def check(it):
 
 
 
-# def user_user(im, hi, msg):
-#     di = {
-#     "action": "msg",
-#     "time": datetime.datetime.now()
-#     "to": hi,
-#     "from": im,
-#     "encoding": "ascii",
-#     "message": f"{msg}"
-#     }
-#     return di
+
 
 # def user_chat(im, id_chat, msg):
 #     di = {

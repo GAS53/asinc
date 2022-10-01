@@ -1,24 +1,22 @@
 import json
-import string
 import unittest
-import os
 import json
-import datetime
 
-import client_objects
-import client_1
+
+
+import base_objects
 import server
 
 
 
 class MyTest(unittest.TestCase):
     def setUp(self):
-        default_cl = client_objects.ping_server()
+        default_cl = base_objects.Ping()
+
         self.byte_di = default_cl.run()
         str_di = self.byte_di.decode('utf-8')
         self.di = json.loads(str_di)
-        # res_date = datetime.datetime.strftime(self.di['time'])
-        # print(self.di['time'])
+
 
 
     def test_client_return_byte(self):
@@ -33,10 +31,10 @@ class MyTest(unittest.TestCase):
     def test_ok_200(self):
         self.assertEqual(self.di['status'], '200')
 
-    # def test_client_return_dict(self):
-    #     res_date = datetime.datetime.strftime(self.di['time'])
-    #     print(res_date)
-    #     self.assertIsInstance(res_date, datetime.datetime)
+    def test_connection(self):
+        serv = server.main()
+
+
 
 
     # def tearDown(self):

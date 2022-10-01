@@ -14,8 +14,8 @@ def main():
         client, addr = SOC.accept()
         print(f'соединение с {addr}')
         res = client.recv(1024)
-        is_send, it_send = check(res)
-        if is_send:
+        it_send = check(res)
+        if it_send:
             client.send(it_send)
         client.close()
 
