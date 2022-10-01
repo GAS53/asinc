@@ -4,13 +4,10 @@ from props import HOST, PORT
 
 
 def main():
-    SOC = socket.socket()  # Создание сокета
+    SOC = socket.socket()
 
-    SOC.bind((HOST, PORT))  # Для связывания сокета с адресом и номером порта
-
+    SOC.bind((HOST, PORT))
     SOC.listen(5)
-    '''error = listen(s, qlength)
-        где s это дескриптор сокета, а qlength это максимальное количество запросов на установление связи, которые могут стоять в очереди, ожидая обработки сервером; это количество может быть ограничено особенностями системы'''
 
     while True:
 

@@ -1,36 +1,19 @@
-from base_objects import Ok_response
 import json
+
+
 
 def check(it):
     it = it.decode('utf-8')
-    # print(f'json decode {it}')
     j_di = json.loads(it)
     di = dict(j_di)
     if di['action'] == 'echo':
-        print(f'Ответ с сервера: {di["message"]} ')  # di {di}
+        print(f'Ответ с сервера: {di["message"]} ') 
     elif di['action'] == 'ping':
         print(f'Cтатус проверки связи {di["status"]}')
 
 
-# ok = { 
-# "response": 200,
-# "alert":"Необязательноесообщение/уведомление"
-# }
 
-# wrong_account = {
-# "response": 402,
-# "error": "wrong password or no account with that name"
-# }
 
-# alredy_connected = {
-# "response": 409,
-# "error": "Someone is already connected with the given user name"
-
-# }
-
-# close_connection = {
-#     "action": "quit"
-# }
 
 
 # autentification = {
@@ -54,11 +37,7 @@ def check(it):
 
 # }
 
-# probe = {
-#     "action": "probe",
-# "time": datetime.datetime.now(),
 
-# }
 
 # def user_user(im, hi, msg):
 #     di = {
@@ -82,28 +61,8 @@ def check(it):
 #     }
 #     return di
 
-# def connect_chat(id_chat):
-#     di = {
-#         "action": "join",
-# "time": datetime.datetime.now()
-# "room": f'{id_chat}',
-
-#     }
-#     return di
 
 
-class ping_server(Ok_response):
-
-    def chose_message_type(self):
-        return 'ping'
-
-        
-
-
-class echo(Ok_response):
-
-    def chose_message_type(self):
-        return 'echo'
 
 
 

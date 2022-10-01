@@ -2,8 +2,9 @@ import socket
 import sys
 from unicodedata import name
 
-from client_objects import echo, ping_server, check
+from client_objects import check
 from props import HOST, PORT
+from base_objects import Ping, Echo
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
 
     if len(sys.argv) == 1:
         # print('ping server')
-        ping_cl = ping_server()
+        ping_cl = Ping()
         # print(ping_cl.run())
         SOC.send(ping_cl.run())
 
@@ -23,7 +24,7 @@ def main():
         msg = sys.argv[1]
         # print(f'echo server {msg}')
         
-        echo_cl = echo()
+        echo_cl = Echo()
         # print(echo_cl.run(msg))
         SOC.send(echo_cl.run(msg))
         
