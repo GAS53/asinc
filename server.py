@@ -3,14 +3,15 @@ import logging.config
 import socket
 
 from server_objects import check
-from props import HOST, PORT
+from props import HOST, PORT, term_or_file
 from base_log_config import server_log_config
+from base_objects import Log
 
 logging.config.dictConfig(server_log_config)
 log = logging.getLogger('server')
 log.debug("Ведение журнала настроено.")
 
-
+@Log(term_or_file)
 def main():
     SOC = socket.socket()
     log.info('создано соединение')
@@ -24,16 +25,16 @@ def main():
     while True:
 
         client, addr = SOC.accept()
-        log.debug(f'создано соединение с {addr}')
+        log.info(f'создано соединение с {addr}')
  
         res = client.recv(1024)
-        log.debug(f'от клиента получены данные {res}')
+        log.info(f'от клиента получены данные')
 
         it_send = check(res)
         if it_send:
-            log.debug(f'от сервера требуется ответ по адресу {addr}')
+            log.info(f'от сервера требуется ответ по адресу {addr}')
             client.send(it_send)
-            log.debug(f'с сервера клиенту отправлено сообщение {it_send}')
+            log.info(f'с сервера клиенту отправлено сообщение')
         client.close()
         log.info(f'соединение с {addr} закрыто')
 

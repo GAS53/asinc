@@ -1,4 +1,3 @@
-
 from props import SERVER_LOG_PATH, CLIENT_LOG_PATH
 
 server_log_config = {
@@ -12,7 +11,6 @@ server_log_config = {
         'console': {
             "class": "logging.StreamHandler",
             "formatter": "standard",
-
             'stream'  : 'ext://sys.stdout',
         },
 
@@ -28,7 +26,7 @@ server_log_config = {
     },
     "loggers": {
         "": {
-            "handlers": ["file", 'console'],
+            "handlers": ['console'], # "file",
             "level": "INFO",
             'propagate': False
         }
@@ -46,7 +44,6 @@ client_log_config = {
         'console': {
             "class": "logging.StreamHandler",
             "formatter": "standard",
-
             'stream'  : 'ext://sys.stdout',
         },
 
@@ -62,7 +59,7 @@ client_log_config = {
     },
     "loggers": {
         "": {
-            "handlers": ["file", 'console'],
+            "handlers": ['console'], # "file",
             "level": "INFO",
             'propagate': False
         }
