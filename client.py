@@ -3,7 +3,7 @@ import sys
 import logging.config
 
 from client_objects import check
-from props import HOST, PORT
+from props import HOST, PORT, term_or_file
 from base_objects import Ping, Echo, User_user, User_chat
 from base_log_config import client_log_config
 
