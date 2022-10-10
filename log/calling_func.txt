@@ -1,0 +1,15 @@
+call func - main with arg () class Log
+call func - main with arg () class Log
+call func - check with arg ([b'{"time": "Mon Oct 10 08:02:34 2022", "action": "ping", "from": "123", "to": "server", "status": "200"}'],) class Log
+call func - check with arg (b'',) class Log
+call func - main with arg () class Log
+call func - check with arg ([b'{"time": "Mon Oct 10 08:04:29 2022", "action": "ping", "from": "123", "to": "server", "status": "200"}'],) class Log
+call func - check with arg (b'',) class Log
+call func - main with arg () class Log
+call func - check with arg (b'{"time": "Mon Oct 10 08:06:13 2022", "action": "ping", "from": "123", "to": "server", "status": "200"}',) class Log
+call func - check with arg (b'{"time": "Mon Oct 10 08:06:13 2022", "action": "msg", "from": "server", "to": "123", "status": "200"}',) class Log
+call func - check with arg (b'{"time": "Mon Oct 10 08:06:13 2022", "action": "ping", "from": "123", "to": "server", "status": "200"}',) class Log
+call func - main with arg () class Log
+call func - check with arg (b'{"time": "Mon Oct 10 08:09:13 2022", "action": "echo", "from": "123", "to": "server", "status": "200", "message": "kjol"}',) class Log
+call func - check with arg (b'{"time": "Mon Oct 10 08:09:13 2022", "action": "msg", "from": "server", "to": "123", "status": "200", "message": "\\u0441\\u0435\\u0440\\u0432\\u0435\\u0440 \\u043f\\u0435\\u0440\\u0435\\u0441\\u043b\\u0430\\u043b \\u0441\\u043e\\u043e\\u0431\\u0449\\u0435\\u043d\\u0438\\u0435: kjol"}',) class Log
+call func - check with arg (b'{"time": "Mon Oct 10 08:09:13 2022", "action": "echo", "from": "123", "to": "server", "status": "200", "message": "kjol"}',) class Log
