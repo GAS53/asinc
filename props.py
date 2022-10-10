@@ -2,7 +2,7 @@ import os
 import socket
 
 HOST = socket.gethostname()
-PORT = 12372
+PORT = 19997
 SERVER_LOG_PATH = 'log/server.log'
 CLIENT_LOG_PATH = 'log/client.log'
 

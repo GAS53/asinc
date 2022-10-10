@@ -1,17 +1,18 @@
 import json
 import logging
 from props import term_or_file
-from base_objects import Log
+from base_objects import Log, decoder
 
 @Log(term_or_file)
-def check(it):
-    it = it.decode('utf-8')
-    j_di = json.loads(it)
-    di = dict(j_di)
-    if di['action'] == 'echo':
+def check(di):
+    di = decoder(di)
+    if di['action'] == 'msg':
+        
         logging.info(f'Ответ с сервера: {di["message"]} ') 
     elif di['action'] == 'ping':
         logging.info(f'Cтатус проверки связи {di["status"]}')
+    # elif di['action'] == 'msg':
+    #     logging.info(f'Ответ с сервера: {di["message"]}') 
 
 
 

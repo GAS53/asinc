@@ -2,7 +2,17 @@ from abc import abstractclassmethod
 import datetime
 import json
 import sys
+import socket
+
+from props import HOST, PORT, COUNT_DEQUE
 from props import PATH_LOGGING_CALL_FUNC
+
+
+def decoder(it):
+    it = it.decode('utf-8')
+    print(f'type {type(it)}')
+    it = json.loads(it)
+    return dict(it)
 
 class Log:
     def __init__(self, in_put='terminal'):
@@ -35,6 +45,9 @@ class Base_message():
         self.di['to'] = None
         self.di['status'] = self.chose_status()
 
+    def from_not_server(self, new):
+        self.di['from'] = new
+
     @abstractclassmethod
     def chose_message_type(self):
         print('необходимо выбрать тип сообщения в chose_message_type')
@@ -66,18 +79,21 @@ class Base_message():
         else:
             raise ValueError('для сообщения в send_to, должен быть указан отправитель')
 
+    def get_target(self):
+        return self.di['to']
 
     def run(self, msg=None, di=None):
         if msg:
-            # print(f'msg {msg}')
             self.di['message'] = msg
-        # print(f'self.di {self.di} type {type(self.di)}')
+
         if di:
             self.di.update(di)
         
+        
         res_di = self.clean_di()
+        # print(f'res_di {res_di}')
         j_di = json.dumps(res_di)
-        # print(f'run {j_di}')
+
         bj_di = j_di.encode('utf-8')
         return bj_di
 
@@ -112,7 +128,9 @@ class User_chat(Ok_response):
     def chose_message_type(self):
         return 'user_chat'
 
-
+class User_all(Ok_response):
+    def chose_message_type(self):
+        return 'all'
 
 class Standard_msg(Ok_response):
     def chose_message_type(self):

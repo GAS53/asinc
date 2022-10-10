@@ -16,15 +16,12 @@ log.debug("Ведение журнала настроено.")
 
 def innit_connect():
     SOC = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    SOC.settimeout(0.2)
     log.info('создано соединение')
-
     SOC.bind((HOST, PORT))
     log.info('соединение настроено')
     SOC.listen(COUNT_DEQUE)
     log.info(f'максимально возможная очередь {COUNT_DEQUE}')
     SOC.setblocking(False)
-
     return SOC
 
 
@@ -34,14 +31,11 @@ def main():
     inputs = [sock]  # сокеты, которые будем читать
     outputs = []  # сокеты, в которые надо писать
     messages ={} # здесь будем хранить сообщения для сокетов
-    id_sock = {}
-
-
     
 
-    while True:
+    while inputs:
         reads, send, excepts = select.select(inputs, outputs, inputs, 0.2)
-        # readable, writes, errors = select.select(inputs, outputs, inputs, 0.2)
+
         for conn in reads:#  сокеты, готовые к чтению
             if conn == sock:  # серверный сокет значит пришло просто подклчюение
                 new_conn, client_addr = conn.accept()
@@ -51,17 +45,15 @@ def main():
 
             else:  # клиентский сокет значит пришла информация
                 data = conn.recv(1024)
-                res = decoder(data)
-                if res:  # если от клиента что-то получено
+                if data:  # если от клиента что-то получено
                     if messages.get(conn, None):
-                        messages[conn].append(res) # добавим в словарь сообщеий
+                        messages[conn].append(data) # добавим в словарь сообщеий
                     else:
-                        messages[conn] = [res]
-
-
+                        messages[conn] = [data]
 
                     if conn not in outputs:
                         outputs.append(conn)
+
                 else:  #  клиент отключился
                     if conn in outputs:
                         outputs.remove(conn)  # исключить клиента из сокетов для написания
@@ -76,28 +68,33 @@ def main():
                     # conn.close() 
                     # del messages[conn]
 
-        # for conn in send:  # сокеты, готовые принять сообщение
-            # try:
+        for conn in send:  # сокеты, готовые принять сообщение
+            msg = messages.get(conn, None)
+            
 
-        # msg = messages.get(conn, None)
-        # if msg:
-        #     log.info(f'сообщение на отправку {msg}')
+            if msg:
+                msg = msg.pop(0)
+                print(f'type {type(msg)}')
+                msg = check(msg)
+                print(f'msg {msg}')
+                print(f'type {type(msg)}')
+
             
                     
-        for msg_conn, data in messages.items():
-            # data = decoder(data)
-            print(f'data {data[0]}')
-            data = check(data[0])
-            print(f'type {type(data)}')
-            if data['action'] == 'all':
-                for conn in send:
-                    conn.send(data)
-            elif data['action'] in ['ping', 'echo']:
-                for conn in send:
-                    if conn == msg_conn:
-                        conn.send(data)
-            else:
-                outputs.remove(conn)
+        # for msg_conn, data in messages.items():
+        #     # data = decoder(data)
+        #     print(f'data {data[0]}')
+        #     data = check(data[0])
+        #     print(f'type {type(data)}')
+        #     if data['action'] == 'all':
+        #         for conn in send:
+        #             conn.send(data)
+        #     elif data['action'] in ['ping', 'echo']:
+        #         for conn in send:
+        #             if conn == msg_conn:
+        #                 conn.send(data)
+        #     else:
+        #         outputs.remove(conn)
 
 
 
