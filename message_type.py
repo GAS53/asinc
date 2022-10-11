@@ -2,39 +2,7 @@ from abc import abstractclassmethod
 import datetime
 import json
 import sys
-import socket
 
-from props import HOST, PORT, COUNT_DEQUE
-from props import PATH_LOGGING_CALL_FUNC
-
-
-def decoder(it):
-    it = it.decode('utf-8')
-    print(f'type {type(it)}')
-    it = json.loads(it)
-    return dict(it)
-
-class Log:
-    def __init__(self, in_put='terminal'):
-        self.in_put = in_put
-
-
-    
-    def __call__(self, func):
-        def wrapper(*args):
-            if self.in_put == 'terminal':
-                print(f'call func - {func.__name__} with arg {args} class {__class__.__name__}')
-            elif self.in_put == 'file' :
-                with open(PATH_LOGGING_CALL_FUNC, 'a') as file:
-                    file.write(f'call func - {func.__name__} with arg {args} class {__class__.__name__}\n')
-            else:
-                raise TypeError('неверно задан параметр в функции Log должен быть "file" или "terminal"')
-
-            res = func(*args)
-            return res
-        return wrapper
-
-# @Log('terminal')
 class Base_message():
     def __init__(self, im):
         self.di = {}
@@ -60,9 +28,6 @@ class Base_message():
     def __repr__(self):
         return f"class {self.__class__.__name__} message type {self.di['action']} status {self.di['status']}"
     
-    # @abstractclassmethod
-    # def who_im(self):
-    #     print('необходимо указать server или id клиента')
 
     def clean_di(self):
         res_di = {}
@@ -97,16 +62,16 @@ class Base_message():
         bj_di = j_di.encode('utf-8')
         return bj_di
 
-# @Log('terminal')
+
 class Ok_response(Base_message):
     def chose_status(self):
         return '200'
-# @Log('terminal')
+
 class Ping(Ok_response):
     def chose_message_type(self):
         return 'ping'
     
-# @Log('terminal')
+
 class Echo(Ok_response):
     def chose_message_type(self):
         return 'echo'
@@ -150,6 +115,3 @@ class Wrong_account(Base_message):
 class Already_connected(Base_message):
     def chose_status(self):
         return '409'
-    
-
-
