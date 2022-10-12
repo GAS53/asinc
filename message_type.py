@@ -2,29 +2,7 @@ from abc import abstractclassmethod
 import datetime
 import json
 import sys
-from props import PATH_LOGGING_CALL_FUNC
 
-class Log:
-    def __init__(self, in_put='terminal'):
-        self.in_put = in_put
-
-
-    
-    def __call__(self, func):
-        def wrapper(*args):
-            if self.in_put == 'terminal':
-                print(f'call func - {func.__name__} with arg {args} class {__class__.__name__}')
-            elif self.in_put == 'file' :
-                with open(PATH_LOGGING_CALL_FUNC, 'a') as file:
-                    file.write(f'call func - {func.__name__} with arg {args} class {__class__.__name__}\n')
-            else:
-                raise TypeError('неверно задан параметр в функции Log должен быть "file" или "terminal"')
-
-            res = func(*args)
-            return res
-        return wrapper
-
-# @Log('terminal')
 class Base_message():
     def __init__(self, im):
         self.di = {}
@@ -34,6 +12,9 @@ class Base_message():
         self.di['from'] = im
         self.di['to'] = None
         self.di['status'] = self.chose_status()
+
+    def from_not_server(self, new):
+        self.di['from'] = new
 
     @abstractclassmethod
     def chose_message_type(self):
@@ -47,9 +28,6 @@ class Base_message():
     def __repr__(self):
         return f"class {self.__class__.__name__} message type {self.di['action']} status {self.di['status']}"
     
-    # @abstractclassmethod
-    # def who_im(self):
-    #     print('необходимо указать server или id клиента')
 
     def clean_di(self):
         res_di = {}
@@ -66,31 +44,34 @@ class Base_message():
         else:
             raise ValueError('для сообщения в send_to, должен быть указан отправитель')
 
+    def get_target(self):
+        return self.di['to']
 
     def run(self, msg=None, di=None):
         if msg:
-            # print(f'msg {msg}')
             self.di['message'] = msg
-        # print(f'self.di {self.di} type {type(self.di)}')
+
         if di:
             self.di.update(di)
         
+        
         res_di = self.clean_di()
+        # print(f'res_di {res_di}')
         j_di = json.dumps(res_di)
-        # print(f'run {j_di}')
+
         bj_di = j_di.encode('utf-8')
         return bj_di
 
-# @Log('terminal')
+
 class Ok_response(Base_message):
     def chose_status(self):
         return '200'
-# @Log('terminal')
+
 class Ping(Ok_response):
     def chose_message_type(self):
         return 'ping'
     
-# @Log('terminal')
+
 class Echo(Ok_response):
     def chose_message_type(self):
         return 'echo'
@@ -112,7 +93,9 @@ class User_chat(Ok_response):
     def chose_message_type(self):
         return 'user_chat'
 
-
+class User_all(Ok_response):
+    def chose_message_type(self):
+        return 'all'
 
 class Standard_msg(Ok_response):
     def chose_message_type(self):
@@ -132,6 +115,3 @@ class Wrong_account(Base_message):
 class Already_connected(Base_message):
     def chose_status(self):
         return '409'
-    
-
-
