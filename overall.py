@@ -9,7 +9,7 @@ def decoder(it):
 
 
 def encoder(it):
-    it = json.loads(it)
+    it = json.dumps(it)
     it = it.encode('utf-8')
     return it
 
