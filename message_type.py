@@ -4,12 +4,12 @@ import json
 import sys
 
 class Base_message():
-    def __init__(self, im):
+    def __init__(self):
         self.di = {}
         self.di['time'] = datetime.datetime.now().strftime('%c')
         self.di['action'] = self.chose_message_type()
         self.di['error'] = None
-        self.di['from'] = im
+        self.di['from'] = None
         self.di['to'] = None
         self.di['status'] = self.chose_status()
 
@@ -43,6 +43,9 @@ class Base_message():
             self.di['to'] = recipient
         else:
             raise ValueError('для сообщения в send_to, должен быть указан отправитель')
+
+    def get_recipient(self):
+        return self.di['to']
 
     def get_target(self):
         return self.di['to']
@@ -86,12 +89,13 @@ class Chat_connect(Ok_response):
         return 'connect_chat'  
 
 class User_user(Ok_response):
+    # @abstractclassmethod
     def chose_message_type(self):
-        return 'user_user'
+        return 'user'
 
 class User_chat(Ok_response):
     def chose_message_type(self):
-        return 'user_chat'
+        return 'chat'
 
 class User_all(Ok_response):
     def chose_message_type(self):
@@ -115,3 +119,7 @@ class Wrong_account(Base_message):
 class Already_connected(Base_message):
     def chose_status(self):
         return '409'
+
+class Who(Ok_response):
+    def chose_message_type(self):
+        return 'who'
