@@ -1,5 +1,7 @@
 import socket
 import logging.config
+import threading
+from threading import Lock
 # from uuid import uuid1
 import sys
 
@@ -14,6 +16,7 @@ class Main():
         self.id = getter
         self.innit_logger()
         self.port = int(port)
+        self.term_lock = Lock()
 
 
     def innit_logger(self):
@@ -34,13 +37,13 @@ class Main():
             self.log.info('Запущен только отправляющий клиент ')
             self.setter()
 
-    def getter(self):
+    def get_msg(self):
         self.init_socket()
         while True:
             data = self.SOC.recv(1024)
             self.log.info('\nПолучено: ', data.decode('utf-8'))
 
-    def setter(self):
+    def set_msg(self):
         self.init_socket()
         while True:
             mess = input('\nВведите что нибудь >>> ')
@@ -51,8 +54,8 @@ class Main():
             # # ua = Echo(IM)    
             self.SOC.send(ua.run(msg=mess))
 
-            data = self.SOC.recv(1024)
-            print('\nПолучено: ', data.decode('utf-8'))
+            # data = self.SOC.recv(1024)
+            # print('\nПолучено: ', data.decode('utf-8'))
 
 if __name__ == '__main__':
     m = Main(sys.argv[1], sys.argv[2] )
