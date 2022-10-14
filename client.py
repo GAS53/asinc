@@ -1,22 +1,26 @@
 import socket
 import logging.config
-import threading
-from threading import Lock
+from threading import Lock, Thread
+from queue import Queue
 # from uuid import uuid1
 import sys
 
 import message_type
 from property import HOST
-# from base_objects import Ping, Echo, User_user, User_chat, User_all
+from message_type import Ping, Echo, User_user, User_chat, User_all, Standard_msg, Who
 from property import client_log_config
+from overall import decoder
 
 
 class Main():
-    def __init__(self, getter, port):
-        self.id = getter
+    def __init__(self, port):
+        # self.id = getter
         self.innit_logger()
         self.port = int(port)
         self.term_lock = Lock()
+        # self.get_queue = Queue()
+        self.send_queue = Queue()
+        self.init_socket()
 
 
     def innit_logger(self):
@@ -29,34 +33,84 @@ class Main():
         self.SOC.connect((HOST, self.port))
 
     def run(self):
-        if self.id == 'g' or self.id == 'get':
-            self.log.info('Запущен только получающий клиент ')
-            self.getter()
+        # try:
+        th_get = Thread(target=self.get_msg)
+        th_get.start()
+        self.log.info('Запущен получающий клиент')
 
-        else:
-            self.log.info('Запущен только отправляющий клиент ')
-            self.setter()
+        th_term = Thread(target=self.terminal_worker)
+        th_term.start()
+        self.log.info('Запущен клиент берущий из терминала')
+
+        th_send = Thread(target=self.send_msg)
+        th_send.start()
+        self.log.info('Запущен отправляющий клиент')
+
+        
+
+
+    def terminal_worker(self):
+        while True:
+            # здесь бы with self.term_lock
+            in_res = input('введите сообщение(пример: a написать всем\n')
+            in_res = in_res.split()
+            print(f'inres split {in_res}')
+            send_config = in_res[0].lower()
+
+
+            if send_config == 'a':
+                ua = User_all()
+                str_msg = ' '.join(in_res[1:])
+                msg = ua.run(msg=str_msg)
+
+            elif send_config == 'u':
+                id_user = in_res[1]
+                uu = User_user()
+                uu.send_to(id_user)  # разобрться как выбрать пользователя для отправки
+                str_msg = ' '.join(in_res[2:])
+                print(f'str_msg {type(str_msg)}')
+                msg = uu.run(msg=str_msg)
+
+            elif send_config == 'p':
+                p = Ping()
+                msg = p.run()
+
+            elif send_config == 'e':
+                e = Echo()
+                str_msg = ' '.join(in_res[1:])
+                msg = e.run(msg=str_msg)
+
+            elif send_config in ['w', 'who']:
+                w = Who()
+                msg = w.run()
+
+
+            else:
+                sm = Standard_msg()
+                msg = sm.run(msg='тестовое сообщение')
+
+
+
+            
+            self.send_queue.put(msg)
+
+
 
     def get_msg(self):
-        self.init_socket()
         while True:
             data = self.SOC.recv(1024)
-            self.log.info('\nПолучено: ', data.decode('utf-8'))
+            with self.term_lock:
+                data = decoder(data)
+                res = f'сообщение {data["message"]}' if data.get('message') else f'статус {data["status"]}'
+                print(res)
 
-    def set_msg(self):
-        self.init_socket()
+    def send_msg(self):
         while True:
-            mess = input('\nВведите что нибудь >>> ')
-            if any(mess.lower() in ext for ext in ['quit', 'exit', 'q']):
-                break  
+            mess = self.send_queue.get()
+            self.SOC.send(mess)
 
-            ua = message_type.User_all(self.id)      
-            # # ua = Echo(IM)    
-            self.SOC.send(ua.run(msg=mess))
-
-            # data = self.SOC.recv(1024)
-            # print('\nПолучено: ', data.decode('utf-8'))
 
 if __name__ == '__main__':
-    m = Main(sys.argv[1], sys.argv[2] )
+    m = Main(sys.argv[1] )
     m.run()
+
