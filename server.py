@@ -27,6 +27,7 @@ class Main():
         self.messages = {}
         self.id_sock = {}
         self.sock_id ={}
+        self.chats = {}
 
     def innit_server(self):
         server = socket.socket()  #socket.AF_INET, socket.SOCK_STREAM)
@@ -96,6 +97,46 @@ class Main():
                     data = self.updater(data, 'to', id)
                     data['message'] = users
 
+                elif data['action'] == 'admin_chat':
+                    '''admin_chat mkchat name'''
+                    command = in_res[0].lower()
+                    
+
+
+                elif data['action'] == "chat":
+                    '''chat 123 add 1213232 '''
+                    data = self.updater(data, 'to', id)
+                    in_res = data['message'].split()
+                    name_chat = in_res[0].lower()
+                    command = in_res[1].lower()
+                    user_id = in_res[2].lower()
+
+
+                    if name_chat not in self.chats:
+                        data['message'] = f'неверно указано название чата'
+                    elif command not in ['mkchat', 'add', 'del_chat', 'send', 'del_user']:
+                         data['message'] = f'неверно указана команда для чата'
+                    elif user_id not in self.id_sock.keys():
+                         data['message'] = f'пользователя с указанным id {user_id} не существует'   
+
+     
+                    
+                    elif command == 'mkchat':                   
+                        self.chats[data['message']] = id
+                        res = f"создан чат {data['message']} вы {id} администратор"
+                        data['message'] = res
+                        
+                    elif command == 'add': 
+                        chat_name = in_res[2]
+                        res = f"в чат {data['message']} вы {id} администратор"
+
+
+
+                    
+
+
+
+
                 data['from'] = id   
                 new_messages.append(data)
         self.messages.clear()
@@ -161,3 +202,5 @@ class Main():
 if __name__ == '__main__':
     m = Main(sys.argv[1])
     m.run()
+
+

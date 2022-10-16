@@ -7,7 +7,7 @@ import sys
 
 import message_type
 from property import HOST
-from message_type import Ping, Echo, User_user, User_chat, User_all, Standard_msg, Who
+from message_type import Make_chat, Ping, Echo, User_user, Chat, User_all, Standard_msg, Who
 from property import client_log_config
 from overall import decoder
 
@@ -83,6 +83,12 @@ class Main():
             elif send_config in ['w', 'who']:
                 w = Who()
                 msg = w.run()
+
+
+            elif send_config == 'chat':
+                ch = Chat()
+                str_msg = ' '.join(in_res[1:])
+                msg = ch.run(msg=str_msg)
 
 
             else:
