@@ -7,7 +7,7 @@ import sys
 
 import message_type
 from property import HOST
-from message_type import Ping, Echo, User_user, User_chat, User_all, Standard_msg, Who
+from message_type import Ping, Echo, User_user, Chat, User_all, Standard_msg, Who, Admin_chat
 from property import client_log_config
 from overall import decoder
 
@@ -71,7 +71,7 @@ class Main():
                 print(f'str_msg {type(str_msg)}')
                 msg = uu.run(msg=str_msg)
 
-            elif send_config == 'p':
+            elif send_config == 'p' or send_config == 'ping':
                 p = Ping()
                 msg = p.run()
 
@@ -83,6 +83,12 @@ class Main():
             elif send_config in ['w', 'who']:
                 w = Who()
                 msg = w.run()
+
+
+            elif send_config == 'chat':
+                ch = Chat()
+                str_msg = ' '.join(in_res[1:])
+                msg = ch.run(msg=str_msg)
 
 
             else:

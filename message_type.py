@@ -83,19 +83,19 @@ class Quit(Ok_response):
     def chose_message_type(self):
         return 'quit'
 
-
-class Chat_connect(Ok_response):
+class Chat(Ok_response):
     def chose_message_type(self):
-        return 'connect_chat'  
+        return 'chat' 
+
+class Admin_chat(Ok_response):
+    def chose_message_type(self):
+        return 'admin_chat' 
 
 class User_user(Ok_response):
     # @abstractclassmethod
     def chose_message_type(self):
         return 'user'
 
-class User_chat(Ok_response):
-    def chose_message_type(self):
-        return 'chat'
 
 class User_all(Ok_response):
     def chose_message_type(self):

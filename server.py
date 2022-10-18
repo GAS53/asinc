@@ -27,6 +27,7 @@ class Main():
         self.messages = {}
         self.id_sock = {}
         self.sock_id ={}
+        self.chats = {}
 
     def innit_server(self):
         server = socket.socket()  #socket.AF_INET, socket.SOCK_STREAM)
@@ -96,6 +97,87 @@ class Main():
                     data = self.updater(data, 'to', id)
                     data['message'] = users
 
+
+                elif data['action'] == "chat":
+                    in_res = data['message'].split()
+
+                    if len(in_res) == 1:
+                        '''chat check'''
+                        first_arg = in_res[0]
+                        if first_arg == 'check':
+                            my_chats = []
+                            for name_chat, users_chat in self.chats.items():
+                                if id in users_chat:
+                                    my_chats.append(name_chat)
+                            res = f'вы состоите в чатах {my_chats}' if my_chats != [] else 'вы не состоите в чатах'
+                            data['message'] = res
+                            data = self.updater(data, 'to', id)
+
+
+                    if len(in_res) == 2:
+                        first_arg = in_res[0]
+                        second_arg = in_res[1]
+                        chat = self.chats.get(second_arg)
+                        if first_arg == 'mkchat':
+                            '''chat mkchat name_chat '''
+                            self.chats[second_arg] = [id]
+                            res = f"создан чат {second_arg} вы {id} администратор"
+                            data['message'] = res
+                            data = self.updater(data, 'to', id)
+
+                        elif first_arg == 'delchat':
+                            '''chat delchat name_chat '''
+                            if self.chats.get(second_arg):
+                                chat = self.chats[second_arg]
+                                if id == chat[0]:
+                                    del self.chats[second_arg]
+                                    res = f"вы {id} как администратор удалили чат {second_arg}"
+                                
+                            else:
+                                res = f"вы {id} не администратор и не можете удалилть чат {second_arg}"
+                            
+                            data['message'] = res
+                            data = self.updater(data, 'to', id)
+
+                        elif first_arg == 'delmy' and id in chat:
+                            '''chat name_chat delmy'''
+                            self.chats[first_arg].remove(id)
+                            res = f"вы {id} удалились из чата {first_arg}"
+                            data['message'] = res
+                            data = self.updater(data, 'to', id)
+
+
+                        else:
+                            '''chat name_chat msg'''
+                            if first_arg in self.chats.keys() and id in self.chats[first_arg]:
+                                for to_id in self.chats[first_arg]:
+                                    data = self.updater(data, 'to', to_id)
+                                data['message'] = second_arg
+                            else:
+                                res = f"неверно задана команда"
+                                data['message'] = res
+                                data = self.updater(data, 'to', id)
+
+                    elif len(in_res) == 3:
+                        first_arg = in_res[0]
+                        second_arg = in_res[1]
+                        third_arg = in_res[3]
+                        chat = self.chats.get(first_arg)
+
+                        if second_arg == 'del' and id == chat[0] and third_arg in chat:
+                            '''chat name_chat del user'''
+                            self.chats[first_arg].remove(third_arg)
+                            res = f"вы {id} как администратор удалили из чата {chat} пользователя {second_arg}"
+                            
+                        elif second_arg == 'add' and id == chat[0] and third_arg in chat:
+                            '''chat name_chat add user'''
+                            self.chats[first_arg].append(third_arg)
+                            res = f"вы {id} как администратор добавили пользователя {second_arg} в чат {chat}"
+                        
+                        data['message'] = res
+                        data = self.updater(data, 'to', id)
+
+
                 data['from'] = id   
                 new_messages.append(data)
         self.messages.clear()
@@ -161,3 +243,5 @@ class Main():
 if __name__ == '__main__':
     m = Main(sys.argv[1])
     m.run()
+
+
