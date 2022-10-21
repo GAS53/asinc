@@ -18,7 +18,13 @@ logging.config.dictConfig(client_log_config)
 log = logging.getLogger(f'server')
 
 
-class Main():
+class ServerVerifier():
+    def __init__(self) -> None:
+        pass
+
+
+
+class Main(metaclass=ServerVerifier):
     def __init__(self, port):
         self.port = int(port)
         self.inputs = []
