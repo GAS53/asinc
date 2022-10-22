@@ -1,8 +1,9 @@
 import select
 import socket
+from socket import AF_INET, SOCK_STREAM
 import logging
 import logging.config
-# from queue import Queue
+
 from random import choices
 import sys
 from uuid import uuid1
@@ -10,17 +11,26 @@ from uuid import uuid1
 
 from property import PORT, HOST, client_log_config
 from overall import decoder, encoder
-
-
+from meta_clases import ServerVerifier
+from overall import Check_port
 
 
 logging.config.dictConfig(client_log_config)
 log = logging.getLogger(f'server')
 
 
-class Main():
-    def __init__(self, port):
-        self.port = int(port)
+
+
+
+
+
+
+
+
+
+
+class Main(metaclass=ServerVerifier):
+    def __init__(self):
         self.inputs = []
         self.sock = self.innit_server()
         self.outputs = []
@@ -28,10 +38,14 @@ class Main():
         self.id_sock = {}
         self.sock_id ={}
         self.chats = {}
+        
 
     def innit_server(self):
-        server = socket.socket()  #socket.AF_INET, socket.SOCK_STREAM)
-        server.bind((HOST, self.port))
+        server = socket.socket(AF_INET, SOCK_STREAM)
+        Cp = Check_port()
+        print(Cp.port)  # test
+        server.bind((HOST, Cp.port))
+        # server.connect()  # test
         server.listen(5)
         server.setblocking(False)
         self.inputs.append(server)
@@ -187,7 +201,9 @@ class Main():
 
     def run(self):
         try:
+            
             self.select_run()
+            dis.dis(self.select_run)
         finally:
             self.sock.close()
 
@@ -241,7 +257,7 @@ class Main():
            
         
 if __name__ == '__main__':
-    m = Main(sys.argv[1])
+    m = Main()  #(sys.argv[1])
     m.run()
 
 

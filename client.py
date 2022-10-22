@@ -1,24 +1,22 @@
 import socket
+from socket import AF_INET, SOCK_STREAM
 import logging.config
 from threading import Lock, Thread
 from queue import Queue
-# from uuid import uuid1
 import sys
 
-import message_type
 from property import HOST
 from message_type import Ping, Echo, User_user, Chat, User_all, Standard_msg, Who, Admin_chat
 from property import client_log_config
-from overall import decoder
+from overall import decoder, Check_port
+
+from meta_clases import ClientVerifier
 
 
-class Main():
-    def __init__(self, port):
-        # self.id = getter
+class Main(metaclass=ClientVerifier):
+    def __init__(self):
         self.innit_logger()
-        self.port = int(port)
         self.term_lock = Lock()
-        # self.get_queue = Queue()
         self.send_queue = Queue()
         self.init_socket()
 
@@ -29,11 +27,12 @@ class Main():
 
 
     def init_socket(self):
-        self.SOC = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.SOC.connect((HOST, self.port))
+        Cp = Check_port()
+        print(Cp.port)
+        self.SOC = socket.socket(AF_INET, SOCK_STREAM)
+        self.SOC.connect((HOST, Cp.port))
 
     def run(self):
-        # try:
         th_get = Thread(target=self.get_msg)
         th_get.start()
         self.log.info('Запущен получающий клиент')
@@ -95,9 +94,6 @@ class Main():
                 sm = Standard_msg()
                 msg = sm.run(msg='тестовое сообщение')
 
-
-
-            
             self.send_queue.put(msg)
 
 
@@ -117,6 +113,6 @@ class Main():
 
 
 if __name__ == '__main__':
-    m = Main(sys.argv[1] )
+    m = Main()
     m.run()
 
