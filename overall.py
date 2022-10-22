@@ -32,3 +32,23 @@ class Log:
             res = func(*args)
             return res
         return wrapper
+
+
+
+
+class Check_port:
+    def __init__(self) -> None:
+        self.port = 7777
+
+    def __get__(self):
+        print(f'run get Checkport')
+        if self.port == None:
+            return 7777
+        else:
+            return self.port
+
+    def __set__(self, instance, value):
+        print(f'run set Checkport')
+        if 0 > value or not isinstance(value, int):
+            raise ValueError("Порт должен быть целым числом больше 0")
+        setattr(instance, self.port, value)
