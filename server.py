@@ -20,15 +20,6 @@ log = logging.getLogger(f'server')
 
 
 
-
-
-
-
-
-
-
-
-
 class Main(metaclass=ServerVerifier):
     def __init__(self):
         self.inputs = []
