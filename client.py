@@ -70,14 +70,9 @@ class Main(metaclass=ClientVerifier):
                 print(f'str_msg {type(str_msg)}')
                 msg = uu.run(msg=str_msg)
 
-            elif send_config == 'p' or send_config == 'ping':
-                p = Ping()
-                msg = p.run()
+            
 
-            elif send_config == 'e':
-                e = Echo()
-                str_msg = ' '.join(in_res[1:])
-                msg = e.run(msg=str_msg)
+
 
             elif send_config in ['w', 'who']:
                 w = Who()

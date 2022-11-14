@@ -17,6 +17,7 @@ DB_PATH = os.getcwd()+'/db.sqllite'
 
 term_or_file = 'file' # terminal or file
 
+MY_NONE = 'не выбран'
 
 
 server_log_config = {
