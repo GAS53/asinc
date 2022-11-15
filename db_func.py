@@ -5,11 +5,19 @@ import property
 
 
 
-def create_tables(cur):
+def create_server(cur):
     tables = ['CREATE TABLE IF NOT EXISTS client(id SERIAL PRIMARY KEY, login char(32))',
     'CREATE TABLE IF NOT EXISTS user(id SERIAL PRIMARY KEY, login char(32))',
-    'CREATE TABLE IF NOT EXISTS client_history (client_id INT NOT NULL, enter_time CHAR(7), enter_date CHAR(7), FOREIGN KEY (client_id) REFERENCES client(id) ON UPDATE CASCADE ON DELETE CASCADE)',
+    'CREATE TABLE IF NOT EXISTS client_history (client_id INT NOT NULL, request char(32), date CHAR(20), FOREIGN KEY (client_id) REFERENCES client(id) ON UPDATE CASCADE ON DELETE CASCADE)',
     'CREATE TABLE IF NOT EXISTS user_client (user_id INT not null, client_id INT not null, FOREIGN KEY (client_id) REFERENCES client(id) ON UPDATE CASCADE ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE)',]
+
+    for table in tables:
+        cur.execute(table)
+
+def create_client(cur):
+    tables = ['CREATE TABLE IF NOT EXISTS history(id SERIAL PRIMARY KEY, login char(32), recipient char(32), msg char(256))',
+    'CREATE TABLE IF NOT EXISTS client(id SERIAL PRIMARY KEY, login char(32))',]
+
 
     for table in tables:
         cur.execute(table)
@@ -21,16 +29,14 @@ def cleaner(li):
         new_li.append(i[0])
     return new_li
 
-def connect_db(command):
-    print(property.DB_PATH)
+def make_dbs():
+    print(f'make {property.SERVER_LOG_PATH}')
     conn = sqlite3.connect(property.DB_PATH)
     with conn:
         cur = conn.cursor()
-        if command:
-            res = cur.execute(command)
-            return cleaner(res.fetchall())
-        else:
-            create_tables(cur)
+        create_tables(cur)
+
+    
 
 
 def get_my_frends():
