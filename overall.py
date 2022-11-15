@@ -33,17 +33,17 @@ class Log:
             return res
         return wrapper
 
-
+from property import PORT
 
 
 class Check_port:
-    def __init__(self) -> None:
-        self.port = 7777
+    def __init__(self, port=None):
+        self.port = port
 
     def __get__(self):
         print(f'run get Checkport')
         if self.port == None:
-            return 7777
+            return PORT
         else:
             return self.port
 

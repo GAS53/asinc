@@ -20,15 +20,6 @@ log = logging.getLogger(f'server')
 
 
 
-
-
-
-
-
-
-
-
-
 class Main(metaclass=ServerVerifier):
     def __init__(self):
         self.inputs = []
@@ -42,9 +33,9 @@ class Main(metaclass=ServerVerifier):
 
     def innit_server(self):
         server = socket.socket(AF_INET, SOCK_STREAM)
-        Cp = Check_port()
-        print(Cp.port)  # test
-        server.bind((HOST, Cp.port))
+        # Cp = Check_port()
+        # print(Cp.port)  # test
+        server.bind((HOST, PORT))
         # server.connect()  # test
         server.listen(5)
         server.setblocking(False)

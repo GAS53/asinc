@@ -4,8 +4,8 @@ from random import choice
 
 
 HOST = socket.gethostname()
-# PORT = 15658
-PORT = choice([x for x in range(12000, 19000)])
+PORT = 15658
+# PORT = choice([x for x in range(12000, 19000)])
 
 SERVER_LOG_PATH = 'log/server.log'
 CLIENT_LOG_PATH = 'log/client.log'
@@ -13,10 +13,12 @@ CLIENT_LOG_PATH = 'log/client.log'
 COUNT_DEQUE = 5
 
 PATH_LOGGING_CALL_FUNC = os.getcwd()+'/log/calling_func.txt'
-DB_PATH = os.getcwd()+'/db.sqllite'
+DB_SERVER = os.getcwd()+'/db_server.sqllite'
+DB_CLIENT = os.getcwd()+'/db_client.sqllite'
 
 term_or_file = 'file' # terminal or file
 
+MY_NONE = 'не выбран'
 
 
 server_log_config = {

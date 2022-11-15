@@ -7,18 +7,25 @@ class Base_message():
     def __init__(self):
         self.di = {}
         self.di['time'] = datetime.datetime.now().strftime('%c')
-        self.di['action'] = self.chose_message_type()
+        self.di['action'] = None
         self.di['error'] = None
         self.di['from'] = None
         self.di['to'] = None
         self.di['status'] = self.chose_status()
+        # self.init_status()
 
     def from_not_server(self, new):
         self.di['from'] = new
 
-    @abstractclassmethod
-    def chose_message_type(self):
-        print('необходимо выбрать тип сообщения в chose_message_type')
+    # def init_status(self):
+    #     if not self.di['action']:
+    #         self.di['']
+
+    # @abstractclassmethod
+    # def chose_message_type(self, i):
+    #     # print('необходимо выбрать тип сообщения в chose_message_type')
+    #     self.di['action'] = i
+
         
 
     @abstractclassmethod
@@ -65,8 +72,15 @@ class Base_message():
         bj_di = j_di.encode('utf-8')
         return bj_di
 
+    def __call__(self):
+        return self.di
+
 
 class Ok_response(Base_message):
+    def __init__(self, i=None):
+        super().__init__()
+        self.di['action'] = i
+
     def chose_status(self):
         return '200'
 
