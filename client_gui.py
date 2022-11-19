@@ -1,5 +1,5 @@
 import sys
-from PyQt6.QtWidgets import QLabel, QApplication, QWidget, QLineEdit, QRadioButton, QTextEdit, QPushButton, QDialog, QComboBox
+from PyQt6.QtWidgets import QInputDialog, QLabel, QApplication, QWidget, QLineEdit, QRadioButton, QTextEdit, QPushButton, QDialog, QComboBox
 from PyQt6 import QtCore
 import socket
 from socket import AF_INET, SOCK_STREAM
@@ -14,7 +14,7 @@ from queue import Queue
 
 
 from db_func import get_my_frends, get_requests, get_my_chats
-from message_type import Ok_response
+from message_type import Ok_response, Handshake
 from property import client_log_config
 from overall import decoder, Check_port
 from property import HOST, MY_NONE, PORT
@@ -26,6 +26,7 @@ class MainWindow(QWidget):
 
         self.setWindowTitle('Чат')
         self.resize(322, 320)
+
 
 
         self.textEdit = QLabel(self) #  QTextEdit(self)
@@ -51,18 +52,18 @@ class MainWindow(QWidget):
         self.choice_user = QComboBox(self)
         self.choice_user.setGeometry(QtCore.QRect(200, 180, 100, 23))
         self.choice_user.setObjectName("choice_user")
-        self.choice_user.addItems(get_my_frends())
+        # self.choice_user.addItems(get_my_frends())
 
 
         self.choice_chat = QComboBox(self)
         self.choice_chat.setGeometry(QtCore.QRect(200, 200, 100, 23))
         self.choice_chat.setObjectName("choice_chat")
-        self.choice_chat.addItems(get_my_chats())
+        # self.choice_chat.addItems(get_my_chats())
 
         self.choice_request = QComboBox(self)
         self.choice_request.setGeometry(QtCore.QRect(200, 220, 100, 23))
         self.choice_request.setObjectName("choice_request")
-        self.choice_request.addItems(get_requests(['ping', 'echo', 'get_contacts', 'add_chat', 'del_chat']))
+        self.choice_request.addItems(get_requests(['ping', 'echo', 'get_contacts', 'add_chat', 'del_chat', 'im']))
 
    
         self.lineEdit = QLineEdit(self)
@@ -73,18 +74,36 @@ class MainWindow(QWidget):
         self.button = QPushButton('Отправить', self)
         self.button.setGeometry(QtCore.QRect(20, 280, 271, 22))
         self.button.setObjectName("pushButton")
-        self.button.clicked.connect(self.clicked)
-            
+        self.button.clicked.connect(self.clicked_send)
 
-        self.show()
-
+     
+        dlg_list = ['user1', 'user2', 'user3']
+        self.im, _ = QInputDialog().getItem(self,'Выберите пользователя', 'Залогиниться под пользователем', dlg_list)
+        pswd, _ = QInputDialog.getText(self, 'Пароль', 'пароль')
+        tup_user = (self.im, pswd)
+        print(self.im)
+        print(pswd)
+        Hs = Handshake()
+        hs_msg = Hs.run(msg=(self.im, pswd))
+        print(hs_msg)
         self.innit_logger()
         self.term_lock = Lock()
         self.send_queue = Queue()
         self.init_socket()
+        self.run_threads()
+        self.send_queue.put(hs_msg)
 
 
-    def clicked(self):
+
+        self.show()
+
+
+
+        
+        # self.init_socket()
+
+
+    def clicked_send(self):
         # print(f'{self.radioButton_1.isChecked()} {self.radioButton_2.isChecked()} {self.radioButton_3.isChecked()}')
         if not self.radioButton_1.isChecked() and not self.radioButton_2.isChecked() and not self.radioButton_3.isChecked():
             self.textEdit.setText('не выбрано сообщение/запрос')
@@ -120,6 +139,7 @@ class MainWindow(QWidget):
                     line = self.lineEdit.text()
                     msg = bm.run(msg=line)
                 self.textEdit.setText(f'отправлен запрос {self.choice_request.currentText()}')
+                print(msg)
                 self.send_queue.put(msg)
 
 
@@ -131,11 +151,11 @@ class MainWindow(QWidget):
 
 
     def init_socket(self):
-        Cp = Check_port(PORT)
+        # Cp = Check_port(PORT)
         self.SOC = socket.socket(AF_INET, SOCK_STREAM)
         self.SOC.connect((HOST, PORT))
 
-    def run(self):
+    def run_threads(self):
         th_get = Thread(target=self.get_msg)
         th_get.start()
         self.log.info('Запущен получающий клиент')
@@ -174,7 +194,7 @@ class MainWindow(QWidget):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.run()
+    window.run_threads()
 
     sys.exit(app.exec())
 

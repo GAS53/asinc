@@ -84,6 +84,16 @@ class Ok_response(Base_message):
     def chose_status(self):
         return '200'
 
+class Handshake(Base_message):
+    def __init__(self):
+        super().__init__()
+        self.di['action'] = 'handshake'
+
+    def chose_status(self):
+        return '200'
+
+
+
 class Ping(Ok_response):
     def chose_message_type(self):
         return 'ping'
