@@ -13,7 +13,6 @@ from property import PORT, HOST, client_log_config
 from overall import decoder, encoder
 from meta_clases import ServerVerifier
 from overall import Check_port
-from db_func import get_my_frends, del_frend, add_frend, check_user
 
 
 logging.config.dictConfig(client_log_config)
@@ -82,34 +81,26 @@ class Main(metaclass=ServerVerifier):
         else:
             log.info(f'клиент {id} отключился')
 
-
-
-
     def message_router(self):
         new_messages = []
         for id, dataset in self.messages.items():
-
             
             for data in dataset:
                 if data['action'] == 'ping' or data['action'] == 'echo':
                     data = self.updater(data, 'to', id)
 
-                elif data['action'] == 'handshake':
-                    data = self.updater(data, 'to', id)
-                    data['message'] = check_user(data["message"])
+                # elif data['action'] == 'all':
+                #     for to_id in self.id_sock.keys():
+                #         data = self.updater(data, 'to', to_id)
 
+                elif data['action'] == 'user':
+                    data['to'] = [data['to']]
 
-                elif data['action'] == "get_my_frends":
-                    data = self.updater(data, 'to', id)
-                    data['message'] = get_my_frends(im)
-
-                elif data['action'] == "del_frend":
-                    data = self.updater(data, 'to', id)
-                    data['message'] = del_frend(im, data["message"])
-
-                elif data['action'] == "add_frend":
-                    data = self.updater(data, 'to', id)
-                    data['message'] = add_frend(im, data["message"])
+                
+                # elif data['action'] == "who":
+                #     users = list(self.id_sock.keys())
+                #     data = self.updater(data, 'to', id)
+                #     data['message'] = users
 
 
                 elif data['action'] == "chat":
@@ -190,14 +181,10 @@ class Main(metaclass=ServerVerifier):
                         
                         data['message'] = res
                         data = self.updater(data, 'to', id)
-                
-                
-                else:
-                    print(f'получен неизвестный запрос {data}')
-                
-                if data['to']:
-                    data['from'] = id   
-                    new_messages.append(data)
+
+
+                data['from'] = id   
+                new_messages.append(data)
         self.messages.clear()
         return new_messages
 

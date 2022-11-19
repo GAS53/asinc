@@ -4,7 +4,7 @@ from random import choice
 
 
 HOST = socket.gethostname()
-PORT = 15658
+PORT = 15646
 # PORT = choice([x for x in range(12000, 19000)])
 
 SERVER_LOG_PATH = 'log/server.log'
