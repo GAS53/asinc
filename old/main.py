@@ -2,7 +2,7 @@ import subprocess
 
 from property import PORT
 from client_gui import run
-from server import Main as Server
+from Server.server import Main as Server
 
 count_clients = 3
 

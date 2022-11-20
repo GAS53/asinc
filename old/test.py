@@ -5,7 +5,7 @@ import json
 
 
 import base_objects
-import server
+import Server.server as server
 
 
 

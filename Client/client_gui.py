@@ -1,28 +1,30 @@
 import sys
-from PyQt6.QtWidgets import QInputDialog, QLabel, QApplication, QWidget, QLineEdit, QRadioButton, QTextEdit, QPushButton, QDialog, QComboBox
-from PyQt6 import QtCore
-import socket
-from socket import AF_INET, SOCK_STREAM
-import logging.config
 from threading import Lock, Thread
 from queue import Queue
-# from pathlib import Path
-# BASE_DIR = Path(__file__).resolve().parent.parent
-# import sys
-# sys.path.append(BASE_DIR)
-# i
+import socket
+import logging.config
+import hmac
+import hashlib
+import time
 
+from PyQt6.QtWidgets import QInputDialog, QLabel, QApplication, QWidget, QLineEdit, QRadioButton, QTextEdit, QPushButton, QDialog, QComboBox
+from PyQt6 import QtCore
 
-from db_func import get_my_frends, get_requests, get_my_chats
-from message_type import Ok_response, Handshake
-from property import client_log_config
-from overall import decoder, Check_port
-from property import HOST, MY_NONE, PORT
+import client_prop
+import net_func
+
+logging.config.dictConfig(client_prop.client_log_config1)
+log = logging.getLogger(f'client')
+
 
 
 class MainWindow(QWidget):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, port):
+        super().__init__()
+        self.init_socket(port)
+        self.msg_for_send = Queue()
+        self.msg_from_server = Queue()
+        self.run_threads()
 
         self.setWindowTitle('Чат')
         self.resize(322, 320)
@@ -63,7 +65,7 @@ class MainWindow(QWidget):
         self.choice_request = QComboBox(self)
         self.choice_request.setGeometry(QtCore.QRect(200, 220, 100, 23))
         self.choice_request.setObjectName("choice_request")
-        self.choice_request.addItems(get_requests(['ping', 'echo', 'get_contacts', 'add_chat', 'del_chat', 'im']))
+        self.choice_request.addItems(net_func.get_requests(['ping', 'echo', 'get_chats',  'get_frends', 'add_chat', 'del_chat', 'im']))
 
    
         self.lineEdit = QLineEdit(self)
@@ -80,29 +82,16 @@ class MainWindow(QWidget):
         dlg_list = ['user1', 'user2', 'user3']
         self.im, _ = QInputDialog().getItem(self,'Выберите пользователя', 'Залогиниться под пользователем', dlg_list)
         pswd, _ = QInputDialog.getText(self, 'Пароль', 'пароль')
-        tup_user = (self.im, pswd)
-        print(self.im)
-        print(pswd)
-        Hs = Handshake()
-        hs_msg = Hs.run(msg=(self.im, pswd))
-        print(hs_msg)
-        self.innit_logger()
-        self.term_lock = Lock()
-        self.send_queue = Queue()
-        self.init_socket()
-        self.run_threads()
-        self.send_queue.put(hs_msg)
+        tup_user = (self.im, pswd) 
+        hs_msg = net_func.Base_message('handshake', msg=tup_user)
+        self.msg_for_send.put(hs_msg())
 
 
 
         self.show()
 
 
-
-        
-        # self.init_socket()
-
-
+    
     def clicked_send(self):
         # print(f'{self.radioButton_1.isChecked()} {self.radioButton_2.isChecked()} {self.radioButton_3.isChecked()}')
         if not self.radioButton_1.isChecked() and not self.radioButton_2.isChecked() and not self.radioButton_3.isChecked():
@@ -115,87 +104,76 @@ class MainWindow(QWidget):
                 self.textEdit.setText('чат')
 
             elif self.radioButton_3.isChecked():  # запрос
-                if MY_NONE == self.choice_request.currentText():
+                if client_prop.MY_NONE == self.choice_request.currentText():
                     self.textEdit.setText('не выбран тип запроса')
                     
 
                 elif 'ping' == self.choice_request.currentText():
-                    bm = Ok_response('ping')
-                    msg = bm.run()
+                    msg = net_func.Base_message('ping')
+                  
 
                 elif 'echo' == self.choice_request.currentText():
-                    bm = Ok_response('echo')
+                    
                     line = self.lineEdit.text()
                     line = line if line else 'пустой эхо запрос'
-                    msg = bm.run(msg=line)
+                    msg = net_func.Base_message('echo', msg=line)
+
 
                 elif 'get_contacts' == self.choice_request.currentText():
-                    bm = Ok_response('get_contacts')
-                    msg = bm.run()
+                    msg = net_func.Base_message('get_contacts')
+
                             
                 else:
                     command = self.choice_request.currentText()
-                    bm = Ok_response(command)
                     line = self.lineEdit.text()
-                    msg = bm.run(msg=line)
+                    msg = net_func.Base_message(command, msg=line)
+
                 self.textEdit.setText(f'отправлен запрос {self.choice_request.currentText()}')
-                print(msg)
-                self.send_queue.put(msg)
+                log.info(f'отправлено сообщение {msg()}')
+                self.msg_for_send.put(msg())
 
-
-                       
-
-    def innit_logger(self):
-        logging.config.dictConfig(client_log_config)
-        self.log = logging.getLogger(f'client')
-
-
-    def init_socket(self):
-        # Cp = Check_port(PORT)
-        self.SOC = socket.socket(AF_INET, SOCK_STREAM)
-        self.SOC.connect((HOST, PORT))
 
     def run_threads(self):
-        th_get = Thread(target=self.get_msg)
+        log.info('инициализация бекэнда')
+
+        # time.sleep(1)
+        data = self.SOC.recv(1024)
+        hash = hmac.new(client_prop.AUTH_KEY, data, hashlib.sha1) # 
+        digest = hash.digest()
+        self.SOC.send(digest)
+
+
+        time.sleep(1)
+        th_get = Thread(target=self.send_msg)
         th_get.start()
-        self.log.info('Запущен получающий клиент')
- 
+        log.info('Запущен получающий клиент')
+        # time.sleep(0.5)
 
-        th_send = Thread(target=self.send_msg)
-        th_send.start()
-        self.log.info('Запущен отправляющий клиент')
-
-        
-
-        
-
-
-
-
-
-    def get_msg(self):
-        while True:
-            data = self.SOC.recv(1024)
-            # with self.term_lock:
-            data = decoder(data)
-            res = f'сообщение: {data["message"]}' if data.get('message') else f'статус: {data["status"]}'
-            self.textEdit.setText(f'{res}')
+        th_term = Thread(target=self.get_msg)
+        th_term.start()
+        log.info('Запущен отправляющий клиент')
 
     def send_msg(self):
         while True:
-            mess = self.send_queue.get()
-            self.SOC.send(mess)
+            mess = self.msg_for_send.get()
+            self.SOC.send(net_func.encoder(mess))
+
+    def get_msg(self):
+        first = True
+        while True:
+            data = self.SOC.recv(1024)
+            data = net_func.decoder(data)
+            log.info(f'от сервера получено сообщение {data["message"]}' if data.get('message') else f'статус {data["status"]}')
+            self.msg_from_server.put(data)
 
 
-
-
+    def init_socket(self, port):
+        self.SOC = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.SOC.connect((socket.gethostname(), port))
+        log.info(f'инициализирован клиент')
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = MainWindow()
-    window.run_threads()
-
+    M = MainWindow(12571)
     sys.exit(app.exec())
-
-
