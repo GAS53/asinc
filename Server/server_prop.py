@@ -12,7 +12,7 @@ term_or_file = 'file' # terminal or file
 
 MY_NONE = 'не выбран'
 
-AUTH_KEY = b'my_key_auth'
+AUTH_KEY = b'my_key_authasdfghjkl'
 
 server_log_config2 = {
     "version": 1,

@@ -9,6 +9,7 @@ import time
 
 from PyQt6.QtWidgets import QInputDialog, QLabel, QApplication, QWidget, QLineEdit, QRadioButton, QTextEdit, QPushButton, QDialog, QComboBox
 from PyQt6 import QtCore
+import PyQt6.QtWidgets as Widgets
 
 import client_prop
 import net_func
@@ -32,7 +33,7 @@ class MainWindow(QWidget):
 
 
         self.textEdit = QLabel(self) #  QTextEdit(self)
-        self.textEdit.setGeometry(QtCore.QRect(10, 10, 301, 161))
+        self.textEdit.setGeometry(QtCore.QRect(10, 10, 320, 161))
         self.textEdit.setObjectName("textEdit")
         self.textEdit.setStyleSheet("border: 3px solid grey;")
 
@@ -73,22 +74,40 @@ class MainWindow(QWidget):
         self.lineEdit.setText("")
 
 
-        self.button = QPushButton('Отправить', self)
+        self.button = Widgets.QPushButton('Отправить', self)
         self.button.setGeometry(QtCore.QRect(20, 280, 271, 22))
         self.button.setObjectName("pushButton")
         self.button.clicked.connect(self.clicked_send)
 
-     
+        # dlg = Widgets.QInputDialog()
+        # dlg.getItem(self, 'title', 'prompt', , editable=False)
+        # dlg.getText(self, 'Пароль', 'пароль')
+        
         dlg_list = ['user1', 'user2', 'user3']
         self.im, _ = QInputDialog().getItem(self,'Выберите пользователя', 'Залогиниться под пользователем', dlg_list)
         pswd, _ = QInputDialog.getText(self, 'Пароль', 'пароль')
-        tup_user = (self.im, pswd) 
+        tup_user = (self.im, pswd)
+
         hs_msg = net_func.Base_message('handshake', msg=tup_user)
-        self.msg_for_send.put(hs_msg())
+        # self.msg_for_send.put(hs_msg())
+
+        self.con_button = Widgets.QPushButton('Подключитсья', self)
+        self.con_button.setGeometry(QtCore.QRect(20, 310, 271, 22))
+        self.button.setObjectName("pushButton22")
+        self.con_button.clicked.connect(self.con_click)
 
 
 
         self.show()
+
+    def con_click(self):
+        tup_user = 'test', 'best'
+        hs_msg = net_func.Base_message('handshake', msg=tup_user)
+        print(hs_msg())
+        self.msg_for_send.put(hs_msg())
+
+
+
 
 
     
@@ -138,7 +157,7 @@ class MainWindow(QWidget):
 
         # time.sleep(1)
         data = self.SOC.recv(1024)
-        hash = hmac.new(client_prop.AUTH_KEY, data, hashlib.sha1) # 
+        hash = hmac.new(client_prop.AUTH_KEY, data, hashlib.sha256) # 
         digest = hash.digest()
         self.SOC.send(digest)
 
@@ -156,10 +175,10 @@ class MainWindow(QWidget):
     def send_msg(self):
         while True:
             mess = self.msg_for_send.get()
+            print(f'mess {mess}')
             self.SOC.send(net_func.encoder(mess))
 
     def get_msg(self):
-        first = True
         while True:
             data = self.SOC.recv(1024)
             data = net_func.decoder(data)
@@ -175,5 +194,5 @@ class MainWindow(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    M = MainWindow(12571)
+    M = MainWindow(12595)
     sys.exit(app.exec())

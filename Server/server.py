@@ -4,6 +4,7 @@ import select
 import os
 import hmac
 import hashlib
+from time import sleep
 
 import server_prop
 import net_func
@@ -69,7 +70,7 @@ class Main:
         while self.inputs:
             new_messages = None
             reads, send, excepts = select.select(self.inputs, self.outputs, self.inputs)
-            # print(f'before 3x3 {len(reads)} {len(send)} {len(excepts)} --- {len(self.inputs)} {len(self.outputs)} {len(self.inputs)}\n')
+            # log.info(f'before 3x3 {len(reads)} {len(send)} {len(excepts)} --- {len(self.inputs)} {len(self.outputs)} {len(self.inputs)}\n')
             
             for conn in reads:
                 if conn == self.server_sock:  # если это сокет, принимаем подключение
@@ -81,10 +82,11 @@ class Main:
                     
                     auth_msg = os.urandom(32)
                     new_conn.send(auth_msg)
-                    hash = hmac.new(server_prop.AUTH_KEY, auth_msg, hashlib.sha1)
+                    hash = hmac.new(server_prop.AUTH_KEY, auth_msg, hashlib.sha256)
                     digest = hash.digest()
-                    
+                    sleep(1)
                     response = new_conn.recv(len(digest))
+                    sleep(1)
                     if hmac.compare_digest(digest, response):
                         log.info(f'аутентификация пройдена {client_addr}')
                         self.auth_list.append(new_conn)
@@ -94,6 +96,7 @@ class Main:
 
                 else:
                     data = conn.recv(1024)
+                    print(f'decoder data {data}')
                     data = net_func.decoder(data)
                     if isinstance(data, dict) and data['status'] == 200 and conn in self.auth_list:
                         if conn not in self.outputs: # даем готовность к приему
@@ -102,8 +105,8 @@ class Main:
                         self.client_msg_redisign(data)                                                
                         
                     else:
-                        print(f'Передан не словарь {data}')
-                        self.del_client(conn)
+                        log.info(f'Передан не словарь клиент отключен {data}')
+                        # self.del_client(conn)
 
 
 
@@ -112,7 +115,7 @@ class Main:
                     res = f'сообщение {message["message"]} от {message["from"]} к {message["to"]}' if message.get('message') else f'статус {message["status"]}'
                     log.info(res)
                     send_to = message['to']
-                    print(f' send to in new_messages {send_to}')
+                    log.info(f' send to in new_messages {send_to}')
                     for id_recipient in send_to:
                         recip_sock = self.id_sock[id_recipient]
                         recip_sock.sendall(net_func.encoder(message))
@@ -130,5 +133,5 @@ class Main:
         log.info(f'начало обработки сообщения от клиента {msg}')
 
 if __name__ == '__main__':
-    M = Main(12571)
+    M = Main(12595)
     M.run()
