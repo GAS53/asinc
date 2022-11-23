@@ -5,7 +5,7 @@ MAX_CLIENTS = 5
 
 SERVER_LOG_PATH = 'log/server.log'
 
-DB_SERVER = os.getcwd()+'/db_server.sqllite'
+DB_SERVER = os.getcwd()+'/Server/db_server.sqllite'
 
 
 term_or_file = 'file' # terminal or file
@@ -13,6 +13,7 @@ term_or_file = 'file' # terminal or file
 MY_NONE = 'не выбран'
 
 AUTH_KEY = b'my_key_authasdfghjkl'
+SALT = b'my _salt'
 
 server_log_config2 = {
     "version": 1,

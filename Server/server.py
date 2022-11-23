@@ -8,6 +8,7 @@ from time import sleep
 
 import server_prop
 import net_func
+from client_msg_redisign import identeficate, msg_redisign
 
 
 logging.config.dictConfig(server_prop.server_log_config1)
@@ -22,6 +23,7 @@ class Main:
         self.innit_server(port)
         self.messages = {}
         self.auth_list = []
+        self.ident = {}
         
 
 
@@ -44,7 +46,9 @@ class Main:
         try:
             self.select_run()
         finally:
+            self.disconnect()
             self.server_sock.close()
+
             log.info(f'сокет сервера закрыт')
 
 
@@ -60,18 +64,28 @@ class Main:
             self.inputs.remove(conn)
         if conn in self.auth_list:
             self.auth_list.remove(conn)
+        if self.ident.get(conn):
+            del self.ident[conn]
 
         conn.close()
+
+    def disconnect(self):
+        for i in self.outputs:
+            self.del_client(i)
+        for i in self.inputs:
+            self.del_client(i)
+        for i in self.auth_list:
+            self.del_client(i)
+        self.ident.clear()
+
  
 
         
 
     def select_run(self):
         while self.inputs:
-            new_messages = None
             reads, send, excepts = select.select(self.inputs, self.outputs, self.inputs)
-            # log.info(f'before 3x3 {len(reads)} {len(send)} {len(excepts)} --- {len(self.inputs)} {len(self.outputs)} {len(self.inputs)}\n')
-            
+                       
             for conn in reads:
                 if conn == self.server_sock:  # если это сокет, принимаем подключение
                     new_conn, client_addr = conn.accept()
@@ -96,42 +110,49 @@ class Main:
 
                 else:
                     data = conn.recv(1024)
-                    print(f'decoder data {data}')
                     data = net_func.decoder(data)
                     if isinstance(data, dict) and data['status'] == 200 and conn in self.auth_list:
                         if conn not in self.outputs: # даем готовность к приему
                             self.outputs.append(conn)
-                        
-                        self.client_msg_redisign(data)                                                
-                        
+                        log.info(f'начало обработки сообщения от клиента {data}')
+                        # print(f'from {client_addr[0]}')
+                        data['from'] = client_addr[0]
+                        if self.ident.get(conn):
+                            msg_redisign(data)
+                        else:
+                            res, login = identeficate(data)
+                            if not res:
+                                log.info('Переданое сообщение не распознано {data}')
+                            elif res and not login:
+                                pre_msg = net_func.Base_message('ident_false','для проведения действий необходима идентификация. залогиньтесь.')
+                                msg = pre_msg()
+                                msg['to'] = data['from']
+                                msg['from'] = 'server'
+                                conn.sendall(net_func.encoder(msg))
+                                # self.server_sock.sendall(net_func.encoder(msg))
+                            
+                            else:
+                                self.ident[conn] = login
+                                pre_msg = net_func.Base_message('ident_ok', login)
+                                msg = pre_msg()
+
+                                conn.sendall(net_func.encoder(msg))
+
                     else:
                         log.info(f'Передан не словарь клиент отключен {data}')
-                        # self.del_client(conn)
+                        self.del_client(conn)
 
 
 
-            if new_messages:
-                for message in new_messages:
-                    res = f'сообщение {message["message"]} от {message["from"]} к {message["to"]}' if message.get('message') else f'статус {message["status"]}'
-                    log.info(res)
-                    send_to = message['to']
-                    log.info(f' send to in new_messages {send_to}')
-                    for id_recipient in send_to:
-                        recip_sock = self.id_sock[id_recipient]
-                        recip_sock.sendall(net_func.encoder(message))
- 
-                    del new_messages  
-            elif conn in self.outputs:
-                self.outputs.remove(conn)
+
+            # elif conn in self.outputs:
+            #     self.outputs.remove(conn)
 
    
             for conn in excepts:
                 self.del_client(conn, error=False)
 
 
-    def client_msg_redisign(self, msg):
-        log.info(f'начало обработки сообщения от клиента {msg}')
-
 if __name__ == '__main__':
-    M = Main(12595)
+    M = Main(12538)
     M.run()
