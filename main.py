@@ -1,18 +1,15 @@
+from random import choice
 import subprocess
 
-from property import PORT
-from client_gui import run
-from server import Main as Server
+from Server import server
+# from Client import client
 
-count_clients = 3
 
-'''sudo apt-get install gnome-terminal'''
+
+PORT = choice([x for x in range(12000, 19000)])
 
 if __name__ == '__main__':
-    # print(f'port {PORT}')
-    # sub_sr = subprocess.run(['gnome-terminal', "-x", "sh", "-c", f'python server.py {PORT}'], shell=False)
-    # for _ in range(count_clients):
-    #     subprocess.run(['gnome-terminal', "-x", "sh", "-c", f'python client.py {PORT}'], shell=False)
-    s = Server()
-    s.run()
-    run()
+    # serv = subprocess.Popen(server,shell=True,args=(PORT,))
+    server(PORT)
+    # client(PORT)
+

@@ -1,6 +1,6 @@
 import subprocess
 
-from server import Main as Server
+from Server.server import Main as Server
 from client import Main as Client
 from property import PORT
 import os

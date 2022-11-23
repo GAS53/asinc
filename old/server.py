@@ -82,7 +82,8 @@ class Main(metaclass=ServerVerifier):
         else:
             log.info(f'клиент {id} отключился')
 
-
+    def handshake(self):
+        ...
 
 
     def message_router(self):
