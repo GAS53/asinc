@@ -1,0 +1,177 @@
+
+<!DOCTYPE html>
+
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>net_func &#8212; документация asinc_chat 0.1</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/translations.js"></script>
+    <link rel="index" title="Алфавитный указатель" href="../genindex.html" />
+    <link rel="search" title="Поиск" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Исходный код net_func</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39; Функции для работы с сетью &#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+
+<span class="kn">from</span> <span class="nn">Crypto.Cipher</span> <span class="kn">import</span> <span class="n">AES</span>
+
+<span class="kn">from</span> <span class="nn">server_prop</span> <span class="kn">import</span> <span class="n">AUTH_KEY</span>
+
+
+<div class="viewcode-block" id="decoder"><a class="viewcode-back" href="../net_func.html#net_func.decoder">[документация]</a><span class="k">def</span> <span class="nf">decoder</span><span class="p">(</span><span class="n">it</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Декорирование пришедшего сообщения &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="n">cript</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="encoder"><a class="viewcode-back" href="../net_func.html#net_func.encoder">[документация]</a><span class="k">def</span> <span class="nf">encoder</span><span class="p">(</span><span class="n">it</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Кодирование пришедшего сообщения &#39;&#39;&#39;</span>
+    <span class="n">it</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+    <span class="n">it</span> <span class="o">=</span> <span class="n">it</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">it</span> <span class="o">=</span> <span class="n">cript</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">it</span></div>
+
+<div class="viewcode-block" id="padding"><a class="viewcode-back" href="../net_func.html#net_func.padding">[документация]</a><span class="k">def</span> <span class="nf">padding</span><span class="p">(</span><span class="n">it</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Дополнение пробелами сообщения необходимо для шифрования &#39;&#39;&#39;</span>
+    <span class="n">count_space</span> <span class="o">=</span> <span class="p">(</span><span class="mi">16</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">it</span><span class="p">)</span> <span class="o">%</span> <span class="mi">16</span><span class="p">)</span> <span class="o">%</span> <span class="mi">16</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">it</span> <span class="o">+</span> <span class="sa">b</span><span class="s1">&#39; &#39;</span><span class="o">*</span><span class="n">count_space</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="cript"><a class="viewcode-back" href="../net_func.html#net_func.cript">[документация]</a><span class="k">def</span> <span class="nf">cript</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Шифрование сообщений &#39;&#39;&#39;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">padding</span><span class="p">(</span><span class="n">AUTH_KEY</span><span class="p">)</span>
+    <span class="n">it</span> <span class="o">=</span> <span class="n">padding</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">encoding</span><span class="p">:</span>
+        <span class="n">cipher</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">AES</span><span class="o">.</span><span class="n">MODE_CBC</span><span class="p">)</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="n">cipher</span><span class="o">.</span><span class="n">iv</span> <span class="o">+</span> <span class="n">cipher</span><span class="o">.</span><span class="n">encrypt</span><span class="p">(</span><span class="n">it</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cipher</span> <span class="o">=</span> <span class="n">AES</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">AES</span><span class="o">.</span><span class="n">MODE_CBC</span><span class="p">,</span> <span class="n">iv</span><span class="o">=</span><span class="n">it</span><span class="p">[:</span><span class="mi">16</span><span class="p">])</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="n">cipher</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">it</span><span class="p">[</span><span class="mi">16</span><span class="p">:])</span>
+
+    <span class="k">return</span> <span class="n">it</span></div>
+
+
+<div class="viewcode-block" id="Base_message"><a class="viewcode-back" href="../net_func.html#net_func.Base_message">[документация]</a><span class="k">class</span> <span class="nc">Base_message</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; Базовый тип сообщений &#39;&#39;&#39;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">di</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Инициализация базового сообщения &#39;&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">di</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">di</span><span class="p">[</span><span class="s1">&#39;time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%c</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">di</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+        <span class="c1"># self.di[&#39;to&#39;] = None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">di</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">200</span>
+        <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">di</span><span class="p">[</span><span class="s1">&#39;message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">msg</span>
+        <span class="k">if</span> <span class="n">di</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">di</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">di</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;class </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> message type </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">di</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> status </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">di</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">di</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">asinc_chat</a></h1>
+
+
+
+
+
+
+
+
+<h3>Навигация</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../ddl.html">ddl module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_gui.html">client_gui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_msg_redisign.html">client_msg_redisign module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_prop.html">client_prop module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fill_db.html">fill_db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../net_func.html">net_func module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../server_prop.html">server_prop module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../server.html">server module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Код модуля</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Быстрый поиск</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Искать" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, gas53.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
