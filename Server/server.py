@@ -1,3 +1,4 @@
+''' Основной файл сервера '''
 import logging.config
 import socket
 import select
@@ -15,9 +16,10 @@ logging.config.dictConfig(server_prop.server_log_config1)
 log = logging.getLogger('server')
 
 
-
 class Main:
+    ''' Основной класс сервера '''
     def __init__(self, port):
+        ''' Инициализация переменных сервера '''
         self.inputs = []
         self.outputs = []
         self.innit_server(port)
@@ -28,6 +30,7 @@ class Main:
 
 
     def innit_server(self, port):
+        '''Инициализация соединения '''
         self.server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_sock.bind((socket.gethostname(), port))
         self.server_sock.listen(server_prop.MAX_CLIENTS)
@@ -35,14 +38,9 @@ class Main:
         self.inputs.append(self.server_sock)
         log.info(f'инициализирован сервер')
 
-    def updater(self, mess, key, val):
-        if mess.get(key, None):
-            mess[key].append(val) 
-        else:
-            mess[key] = [val]
-        return mess
 
     def run(self):
+        '''Запускатель и безопасноостанавливатель сервера'''
         try:
             self.select_run()
         finally:
@@ -53,6 +51,7 @@ class Main:
 
 
     def del_client(self, conn, error=False):
+        ''' Удаление клиента при его отключении'''
         if error:
             log.info(f'клиент отключился с ошибкой')
         else:
@@ -70,6 +69,7 @@ class Main:
         conn.close()
 
     def disconnect(self):
+        ''' Останавливатель сервера и отключатель клиентов '''
         for i in self.outputs:
             self.del_client(i)
         for i in self.inputs:
@@ -83,6 +83,7 @@ class Main:
         
 
     def select_run(self):
+        ''' Основной цикл прохода по сокетам'''
         while self.inputs:
             reads, send, excepts = select.select(self.inputs, self.outputs, self.inputs)
                        
@@ -149,13 +150,6 @@ class Main:
                         log.info(f'Передан не словарь клиент отключен {data}')
                         self.del_client(conn)
 
-
-
-
-            # elif conn in self.outputs:
-            #     self.outputs.remove(conn)
-
-   
             for conn in excepts:
                 self.del_client(conn, error=False)
 

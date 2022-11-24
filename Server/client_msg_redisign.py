@@ -1,3 +1,4 @@
+''' Обработчик сообщений сервера '''
 import sqlite3
 
 
@@ -8,6 +9,7 @@ import net_func
 
 
 def get_dbpswd(login):
+    ''' Получение пароля из базы по логину '''
     conn = sqlite3.connect(DB_SERVER)
     with conn:
         cur = conn.cursor()
@@ -15,18 +17,19 @@ def get_dbpswd(login):
         res = cur.fetchall()
         if res:
             db_id, db_login, db_pswd = res[0]
-            # db_pswd = db_pswd.encode('utf-8')
             return db_pswd
     return False
 
 
 def make_pswd(pswd):
+    ''' получения пароля на основании полученного от пользователя'''
     pswd = pswd.encode('utf-8')
     pswd = pbkdf2_hmac('sha256', pswd, SALT, 100000)
     return str(pswd)
 
 
 def identeficate(msg):
+    ''' идентификация пользователя '''
     if msg['action'] == 'handshake':
         try:
             login, pswd = msg['message']
@@ -49,6 +52,7 @@ def identeficate(msg):
 
 
 def msg_sender(msg, conn_dict):
+    ''' Отсылка сообщения адресату или нескольким адресатам '''
     recipients = msg['to']
     byte_msg = net_func.encoder(msg)
     if isinstance(recipients, list):
@@ -61,8 +65,8 @@ def msg_sender(msg, conn_dict):
 
 
 def msg_routing(in_msg, inner_login, conn_dict):
+    ''' Обработчик сообщеиней идентифицированного пользователя '''
     print(f'обработка входящего {in_msg}')
-
 
     if in_msg['action'] == 'ping':
         pre_msg = net_func.Base_message('re_ping')
@@ -84,6 +88,7 @@ def msg_routing(in_msg, inner_login, conn_dict):
 
 
 def get_revers(di):
+    ''' Получения реверса словаря '''
     new_di = {}
     for k, v in di.items():
         new_di[v] = k
@@ -93,6 +98,7 @@ def get_revers(di):
 
 
 def DDL():
+    ''' Создание новой базы данных '''
     print(DB_SERVER)
     conn = sqlite3.connect(DB_SERVER)
     with conn:

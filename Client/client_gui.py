@@ -1,3 +1,5 @@
+''' Приложение клиент основной файл '''
+
 import sys
 from threading import Lock, Thread
 from queue import Queue
@@ -15,27 +17,17 @@ import client_prop
 import net_func
 
 logging.config.dictConfig(client_prop.client_log_config1)
-log = logging.getLogger(f'client')
+log = logging.getLogger('client')
 
 
 
-
-def login_required(login):
-    def wrap2(func):
-        def wrap(*arg):
-            if login:
-                res = func(*arg)
-                return res
-            
-        return wrap
-    return wrap2
 
 class MainWindow(QWidget):
-    """ Создание и управление базой данных sqlite. """
+    """ Создание и управление основного окна"""
     
 
     def __init__(self, port):
-        """ __init__dfdfgd"""
+        """ инициализация виджетов """
         super().__init__()
         self.init_socket(port)
         self.msg_for_send = Queue()
@@ -47,43 +39,30 @@ class MainWindow(QWidget):
         self.resize(300, 350)
 
 
-
-        self.textEdit = QLabel(self) #  QTextEdit(self)
+        self.textEdit = QLabel(self)
         self.textEdit.setGeometry(QtCore.QRect(10, 10, 280, 161))
         self.textEdit.setObjectName("textEdit")
         self.textEdit.setStyleSheet("border: 3px solid grey;")
 
-
-
-
         self.radioButton_1 = QRadioButton('написать пользователю', self)
         self.radioButton_1.setGeometry(QtCore.QRect(20, 180, 191, 21))
-                
 
         self.radioButton_2 = QRadioButton('написать в чат', self)
         self.radioButton_2.setGeometry(QtCore.QRect(20, 200, 191, 21))
 
-
         self.radioButton_3 = QRadioButton('сделать запрос', self)
         self.radioButton_3.setGeometry(QtCore.QRect(20, 220, 191, 21))
-                
 
         self.choice_user = QComboBox(self)
         self.choice_user.setGeometry(QtCore.QRect(200, 180, 90, 23))
-        self.choice_user.setObjectName("choice_user")
-        # self.choice_user.addItems(get_my_frends())
-
 
         self.choice_chat = QComboBox(self)
         self.choice_chat.setGeometry(QtCore.QRect(200, 200, 90, 23))
-        self.choice_chat.setObjectName("choice_chat")
-        # self.choice_chat.addItems(get_my_chats())
 
         self.choice_request = QComboBox(self)
         self.choice_request.setGeometry(QtCore.QRect(200, 220, 90, 23))
         self.choice_request.setObjectName("choice_request")
         self.choice_request.addItems(net_func.get_requests(['ping', 'echo', 'get_chats',  'get_frends', 'add_chat', 'del_chat', 'im']))
-
    
         self.lineEdit = QLineEdit(self)
         self.lineEdit.setGeometry(QtCore.QRect(20, 250, 271, 22))
@@ -92,7 +71,6 @@ class MainWindow(QWidget):
 
         self.button = Widgets.QPushButton('Отправить', self)
         self.button.setGeometry(QtCore.QRect(20, 280, 271, 22))
-        # if self.login:
         self.button.clicked.connect(self.clicked_send)
         
 
@@ -103,7 +81,7 @@ class MainWindow(QWidget):
         self.show()
 
     def identification_click(self):
-        """ Создание подключения к базе данных """
+        """ проведение идентификации пользователя """
         dlg = Widgets.QDialog(self)
         dlg.resize(322, 320)
         im, _ = QInputDialog.getText(self, 'Логин', 'Введите логин')
@@ -112,12 +90,8 @@ class MainWindow(QWidget):
         self.msg_for_send.put(hs_msg())
 
 
-
-
-
-    # @login_required(login)
     def clicked_send(self):
-        """ Создание подключения к базе данных 2222"""
+        """ действия при нажатии на основную кнопку отправки запросов/сообщений """
         if self.login:
             if not self.radioButton_1.isChecked() and not self.radioButton_2.isChecked() and not self.radioButton_3.isChecked():
                 self.textEdit.setText('не выбрано сообщение/запрос')
@@ -136,18 +110,14 @@ class MainWindow(QWidget):
                     elif 'ping' == self.choice_request.currentText():
                         msg = net_func.Base_message('ping')
                     
-
                     elif 'echo' == self.choice_request.currentText():
-                        
                         line = self.lineEdit.text()
                         line = line if line else 'пустой эхо запрос'
                         msg = net_func.Base_message('echo', msg=line)
 
-
                     elif 'get_contacts' == self.choice_request.currentText():
                         msg = net_func.Base_message('get_contacts')
 
-                                
                     else:
                         command = self.choice_request.currentText()
                         line = self.lineEdit.text()
@@ -160,32 +130,33 @@ class MainWindow(QWidget):
 
 
     def run_threads(self):
+        ''' Запуск процессов приема и передачи сообщений '''
         log.info('инициализация бекэнда')
 
-        # time.sleep(1)
         data = self.SOC.recv(1024)
         hash = hmac.new(client_prop.AUTH_KEY, data, hashlib.sha256) # 
         digest = hash.digest()
         self.SOC.send(digest)
 
-
         time.sleep(1)
         th_get = Thread(target=self.send_msg)
         th_get.start()
         log.info('Запущен отправляющий клиент')
-        # time.sleep(0.5)
 
         th_term = Thread(target=self.get_msg)
         th_term.start()
         log.info('Запущен получающий клиент')
 
+
     def send_msg(self):
+        ''' Отправляющий процесс '''
         while True:
             mess = self.msg_for_send.get()
             print(f'mess {mess}')
             self.SOC.send(net_func.encoder(mess))
 
     def get_msg(self):
+        '''Принимающий процесс'''
         while True:
             data = self.SOC.recv(1024)
             data = net_func.decoder(data)
@@ -198,16 +169,12 @@ class MainWindow(QWidget):
             elif data["action"] == 'ident_false' or data["action"] == 're_ping':
                 self.textEdit.setText(data["message"])
             
-
-
-
             else:
                 print(f'получено неизвестное сообщеине {data}')
                 
 
-
-
     def init_socket(self, port):
+        '''Инициализация соединения'''
         self.SOC = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.SOC.connect((socket.gethostname(), port))
         log.info(f'инициализирован клиент')
