@@ -1,0 +1,210 @@
+
+<!DOCTYPE html>
+
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ddl &#8212; документация asinc_chat 0.1</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/translations.js"></script>
+    <link rel="index" title="Алфавитный указатель" href="../genindex.html" />
+    <link rel="search" title="Поиск" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Исходный код ddl</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39; Попытка перевода функционала с sql на sqlalchemy&#39;&#39;&#39;</span>
+<span class="c1"># !!!!!!!!!!!!устарело удалить после тестирования</span>
+<span class="c1"># tables = [&#39;CREATE TABLE IF NOT EXISTS client(id SERIAL PRIMARY KEY, login char(32))&#39;,</span>
+<span class="c1">#         &#39;CREATE TABLE IF NOT EXISTS user(id SERIAL PRIMARY KEY, login char(32), password char(32))&#39;,</span>
+<span class="c1">#         &#39;CREATE TABLE IF NOT EXISTS client_history (client_id INT NOT NULL, request char(32), date CHAR(20), FOREIGN KEY (client_id) REFERENCES client(id) ON UPDATE CASCADE ON DELETE CASCADE)&#39;,</span>
+<span class="c1">#         &#39;CREATE TABLE IF NOT EXISTS user_history (user_id INT NOT NULL, request char(32), date CHAR(20), FOREIGN KEY (user_id) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE)&#39;,</span>
+<span class="c1">#         &#39;CREATE TABLE IF NOT EXISTS user_client (user_id INT not null, client_id INT not null, FOREIGN KEY (client_id) REFERENCES client(id) ON UPDATE CASCADE ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE)&#39;,</span>
+<span class="c1">#         &#39;CREATE TABLE IF NOT EXISTS friends(im INT not null, friend INT not null, FOREIGN KEY (im) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE, FOREIGN KEY (friend) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE)&#39;,</span>
+<span class="c1">#         &#39;CREATE TABLE IF NOT EXISTS frendship_request(im INT not null, friend INT not null, FOREIGN KEY (im) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE, FOREIGN KEY (friend) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE)&#39;,]</span>
+
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">create_engine</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy.orm</span> <span class="kn">import</span> <span class="n">declarative_base</span><span class="p">,</span> <span class="n">relationship</span>
+<span class="kn">from</span> <span class="nn">sqlalchemy</span> <span class="kn">import</span> <span class="n">Column</span><span class="p">,</span> <span class="n">Integer</span><span class="p">,</span> <span class="n">String</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">,</span> <span class="n">Table</span>
+<span class="kn">from</span> <span class="nn">server_prop</span> <span class="kn">import</span> <span class="n">DB_SERVER</span>
+
+<span class="n">Base</span> <span class="o">=</span> <span class="n">declarative_base</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Client"><a class="viewcode-back" href="../ddl.html#ddl.Client">[документация]</a><span class="k">class</span> <span class="nc">Client</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ip</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ip</span> <span class="o">=</span> <span class="n">ip</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">user_id</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;clients&#39;</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">ip</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;users.id&quot;</span><span class="p">))</span>
+
+    <span class="n">user</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Users&#39;</span><span class="p">,</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;client&#39;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="Users"><a class="viewcode-back" href="../ddl.html#ddl.Users">[документация]</a><span class="k">class</span> <span class="nc">Users</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">login</span><span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">login</span> <span class="o">=</span> <span class="n">login</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">password</span>
+
+    <span class="n">__tablename__</span><span class="o">=</span><span class="s1">&#39;users&#39;</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">login</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">32</span><span class="p">))</span>
+
+    <span class="n">client</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s2">&quot;Client&quot;</span><span class="p">,</span>  <span class="n">back_populates</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">)</span>
+    <span class="n">histor</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s2">&quot;History&quot;</span><span class="p">,</span> <span class="n">back_populates</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">)</span>
+  
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">login</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">password</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="History"><a class="viewcode-back" href="../ddl.html#ddl.History">[документация]</a><span class="k">class</span> <span class="nc">History</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request</span> <span class="o">=</span> <span class="n">request</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_id</span> <span class="o">=</span> <span class="n">user_id</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;user_history&#39;</span>
+
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">request</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">String</span><span class="p">(</span><span class="mi">15</span><span class="p">))</span>
+    <span class="n">user_id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="s1">&#39;users.id&#39;</span><span class="p">))</span>
+
+    <span class="n">user</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Users&#39;</span><span class="p">,</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;histor&#39;</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="Frends"><a class="viewcode-back" href="../ddl.html#ddl.Frends">[документация]</a><span class="k">class</span> <span class="nc">Frends</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">,</span> <span class="n">my_friend</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">im</span> <span class="o">=</span> <span class="n">im</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">my_friend</span> <span class="o">=</span> <span class="n">my_friend</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;frends&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">my_friend</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">im_id</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Users&#39;</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;users.id&quot;</span><span class="p">),</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;friends&#39;</span><span class="p">)</span>
+    <span class="n">my_friend_id</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Users&#39;</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;users.id&quot;</span><span class="p">),</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;friends&#39;</span><span class="p">)</span></div>
+    
+
+
+<div class="viewcode-block" id="Frend_request"><a class="viewcode-back" href="../ddl.html#ddl.Frend_request">[документация]</a><span class="k">class</span> <span class="nc">Frend_request</span><span class="p">(</span><span class="n">Base</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">im</span><span class="p">,</span> <span class="n">my_friend</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">im</span> <span class="o">=</span> <span class="n">im</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">my_friend</span> <span class="o">=</span> <span class="n">my_friend</span>
+
+    <span class="n">__tablename__</span> <span class="o">=</span> <span class="s1">&#39;frend_req&#39;</span>
+    <span class="nb">id</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">,</span> <span class="n">primary_key</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">my_friend</span> <span class="o">=</span> <span class="n">Column</span><span class="p">(</span><span class="n">Integer</span><span class="p">)</span>
+    <span class="n">im_id</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Users&#39;</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;users.id&quot;</span><span class="p">),</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;frend_req&#39;</span><span class="p">)</span>
+    <span class="n">my_friend_id</span> <span class="o">=</span> <span class="n">relationship</span><span class="p">(</span><span class="s1">&#39;Users&#39;</span><span class="p">,</span> <span class="n">ForeignKey</span><span class="p">(</span><span class="s2">&quot;users.id&quot;</span><span class="p">),</span> <span class="n">back_populates</span><span class="o">=</span><span class="s1">&#39;frend_req&#39;</span><span class="p">)</span></div>
+    
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;sqlite:///</span><span class="si">{</span><span class="n">DB_SERVER</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">echo</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">future</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">Base</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">create_all</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">asinc_chat</a></h1>
+
+
+
+
+
+
+
+
+<h3>Навигация</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../ddl.html">ddl module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_gui.html">client_gui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_msg_redisign.html">client_msg_redisign module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_prop.html">client_prop module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fill_db.html">fill_db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../net_func.html">net_func module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../server_prop.html">server_prop module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../server.html">server module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Код модуля</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Быстрый поиск</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Искать" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, gas53.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

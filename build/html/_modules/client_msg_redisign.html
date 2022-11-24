@@ -1,0 +1,234 @@
+
+<!DOCTYPE html>
+
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>client_msg_redisign &#8212; документация asinc_chat 0.1</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/alabaster.css" />
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/translations.js"></script>
+    <link rel="index" title="Алфавитный указатель" href="../genindex.html" />
+    <link rel="search" title="Поиск" href="../search.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Исходный код client_msg_redisign</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39; Обработчик сообщений сервера &#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+
+
+<span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">pbkdf2_hmac</span>
+
+<span class="kn">from</span> <span class="nn">server_prop</span> <span class="kn">import</span> <span class="n">DB_SERVER</span><span class="p">,</span> <span class="n">SALT</span>
+<span class="kn">import</span> <span class="nn">net_func</span>
+
+
+<div class="viewcode-block" id="get_dbpswd"><a class="viewcode-back" href="../client_msg_redisign.html#client_msg_redisign.get_dbpswd">[документация]</a><span class="k">def</span> <span class="nf">get_dbpswd</span><span class="p">(</span><span class="n">login</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Получение пароля из базы по логину &#39;&#39;&#39;</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">DB_SERVER</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">conn</span><span class="p">:</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;select * from users where login=&#39;</span><span class="si">{</span><span class="n">login</span><span class="si">}</span><span class="s2">&#39; limit 1&quot;</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">res</span><span class="p">:</span>
+            <span class="n">db_id</span><span class="p">,</span> <span class="n">db_login</span><span class="p">,</span> <span class="n">db_pswd</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">db_pswd</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="make_pswd"><a class="viewcode-back" href="../client_msg_redisign.html#client_msg_redisign.make_pswd">[документация]</a><span class="k">def</span> <span class="nf">make_pswd</span><span class="p">(</span><span class="n">pswd</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; получения пароля на основании полученного от пользователя&#39;&#39;&#39;</span>
+    <span class="n">pswd</span> <span class="o">=</span> <span class="n">pswd</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="n">pswd</span> <span class="o">=</span> <span class="n">pbkdf2_hmac</span><span class="p">(</span><span class="s1">&#39;sha256&#39;</span><span class="p">,</span> <span class="n">pswd</span><span class="p">,</span> <span class="n">SALT</span><span class="p">,</span> <span class="mi">100000</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">pswd</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="identeficate"><a class="viewcode-back" href="../client_msg_redisign.html#client_msg_redisign.identeficate">[документация]</a><span class="k">def</span> <span class="nf">identeficate</span><span class="p">(</span><span class="n">msg</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; идентификация пользователя &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">msg</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;handshake&#39;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">login</span><span class="p">,</span> <span class="n">pswd</span> <span class="o">=</span> <span class="n">msg</span><span class="p">[</span><span class="s1">&#39;message&#39;</span><span class="p">]</span>
+            <span class="n">db_pswd</span> <span class="o">=</span> <span class="n">get_dbpswd</span><span class="p">(</span><span class="n">login</span><span class="p">)</span>
+            <span class="n">user_pswd</span> <span class="o">=</span> <span class="n">make_pswd</span><span class="p">(</span><span class="n">pswd</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">user_pswd</span> <span class="o">==</span> <span class="n">db_pswd</span> <span class="ow">and</span> <span class="n">user_pswd</span> <span class="o">!=</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">db_pswd</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;пароль совпал&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">login</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;пароль не совпал&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span>
+                
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;exeption </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="msg_sender"><a class="viewcode-back" href="../client_msg_redisign.html#client_msg_redisign.msg_sender">[документация]</a><span class="k">def</span> <span class="nf">msg_sender</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">conn_dict</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Отсылка сообщения адресату или нескольким адресатам &#39;&#39;&#39;</span>
+    <span class="n">recipients</span> <span class="o">=</span> <span class="n">msg</span><span class="p">[</span><span class="s1">&#39;to&#39;</span><span class="p">]</span>
+    <span class="n">byte_msg</span> <span class="o">=</span> <span class="n">net_func</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">recipients</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">send_login</span><span class="p">,</span> <span class="n">conn</span> <span class="ow">in</span> <span class="n">conn_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">send_login</span> <span class="ow">in</span> <span class="n">recipients</span><span class="p">:</span>
+                <span class="n">conn</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">byte_msg</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+       <span class="n">conn</span> <span class="o">=</span> <span class="n">conn_dict</span><span class="p">[</span><span class="n">recipients</span><span class="p">]</span>
+       <span class="n">conn</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">byte_msg</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="msg_routing"><a class="viewcode-back" href="../client_msg_redisign.html#client_msg_redisign.msg_routing">[документация]</a><span class="k">def</span> <span class="nf">msg_routing</span><span class="p">(</span><span class="n">in_msg</span><span class="p">,</span> <span class="n">inner_login</span><span class="p">,</span> <span class="n">conn_dict</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Обработчик сообщеиней идентифицированного пользователя &#39;&#39;&#39;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;обработка входящего </span><span class="si">{</span><span class="n">in_msg</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">in_msg</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;ping&#39;</span><span class="p">:</span>
+        <span class="n">pre_msg</span> <span class="o">=</span> <span class="n">net_func</span><span class="o">.</span><span class="n">Base_message</span><span class="p">(</span><span class="s1">&#39;re_ping&#39;</span><span class="p">)</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">pre_msg</span><span class="p">()</span>
+        <span class="n">msg</span><span class="p">[</span><span class="s1">&#39;to&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inner_login</span>
+        <span class="n">msg</span><span class="p">[</span><span class="s1">&#39;from&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;server&#39;</span>
+        <span class="n">msg</span><span class="p">[</span><span class="s1">&#39;message&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;ping прошел успешно&#39;</span>
+    <span class="c1"># elif in_msg[&#39;action&#39;] == &#39;ping&#39;:</span>
+    <span class="c1"># !!!!!!!!!!!!!!</span>
+
+
+
+
+
+    <span class="n">msg_sender</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">conn_dict</span><span class="p">)</span></div>
+
+
+
+
+
+<div class="viewcode-block" id="get_revers"><a class="viewcode-back" href="../client_msg_redisign.html#client_msg_redisign.get_revers">[документация]</a><span class="k">def</span> <span class="nf">get_revers</span><span class="p">(</span><span class="n">di</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Получения реверса словаря &#39;&#39;&#39;</span>
+    <span class="n">new_di</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">di</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">new_di</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="o">=</span> <span class="n">k</span>
+    <span class="k">return</span> <span class="n">new_di</span></div>
+
+
+
+
+<div class="viewcode-block" id="DDL"><a class="viewcode-back" href="../client_msg_redisign.html#client_msg_redisign.DDL">[документация]</a><span class="k">def</span> <span class="nf">DDL</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; Создание новой базы данных &#39;&#39;&#39;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">DB_SERVER</span><span class="p">)</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">DB_SERVER</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">conn</span><span class="p">:</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+
+
+        <span class="n">tables</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;CREATE TABLE IF NOT EXISTS client(id SERIAL PRIMARY KEY, login char(32))&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;CREATE TABLE IF NOT EXISTS user(id SERIAL PRIMARY KEY, login char(32), password char(32))&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;CREATE TABLE IF NOT EXISTS client_history (client_id INT NOT NULL, request char(32), date CHAR(20), FOREIGN KEY (client_id) REFERENCES client(id) ON UPDATE CASCADE ON DELETE CASCADE)&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;CREATE TABLE IF NOT EXISTS user_history (user_id INT NOT NULL, request char(32), date CHAR(20), FOREIGN KEY (user_id) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE)&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;CREATE TABLE IF NOT EXISTS user_client (user_id INT not null, client_id INT not null, FOREIGN KEY (client_id) REFERENCES client(id) ON UPDATE CASCADE ON DELETE CASCADE, FOREIGN KEY (user_id) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE)&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;CREATE TABLE IF NOT EXISTS friends(im INT not null, friend INT not null, FOREIGN KEY (im) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE, FOREIGN KEY (friend) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE)&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;CREATE TABLE IF NOT EXISTS frendship_request(im INT not null, friend INT not null, FOREIGN KEY (im) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE, FOREIGN KEY (friend) REFERENCES user(id) ON UPDATE CASCADE ON DELETE CASCADE)&#39;</span><span class="p">,]</span>
+
+        <span class="k">for</span> <span class="n">table</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">table</span><span class="p">)</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">DDL</span><span class="p">()</span>
+    <span class="c1"># engine = create_engine()</span>
+    <span class="c1"># engine.connect(DB_SERVER)</span>
+    <span class="c1"># print(DB_SERVER)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../index.html">asinc_chat</a></h1>
+
+
+
+
+
+
+
+
+<h3>Навигация</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../ddl.html">ddl module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_gui.html">client_gui module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_msg_redisign.html">client_msg_redisign module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../client_prop.html">client_prop module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fill_db.html">fill_db module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../net_func.html">net_func module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../server_prop.html">server_prop module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../server.html">server module</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Код модуля</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Быстрый поиск</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Искать" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, gas53.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.3.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

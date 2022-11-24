@@ -1,3 +1,4 @@
+''' Попытка автозаполнения базы - не используется'''
 from random import choice
 
 from sqlalchemy import create_engine

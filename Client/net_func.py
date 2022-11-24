@@ -1,3 +1,5 @@
+'''функции для работы с сетью'''
+
 import json
 import datetime
 
@@ -8,6 +10,7 @@ import client_prop
 from client_prop import AUTH_KEY
 
 def decoder(it):
+    ''' Декодировщик сообщений '''
     try:
         it = cript(it, encoding=False)
         it = json.loads(it)
@@ -17,17 +20,20 @@ def decoder(it):
 
 
 def encoder(it):
+    ''' Кодировщик сообщений '''
     it = json.dumps(it)
     it = it.encode('utf-8')
     it = cript(it, encoding=True)
     return it
 
 def padding(it):
+    ''' Добавление дополнительных символов необходимо для кодирования'''
     count_space = (16 - len(it) % 16) % 16
     res = it + b' '*count_space
     return res
 
 def cript(it, encoding=True):
+    ''' Шифрование сообщения '''
     key = padding(AUTH_KEY)
     it = padding(it)
 
@@ -41,16 +47,17 @@ def cript(it, encoding=True):
     return it
 
 def get_requests(li):
+    ''' Создание списка запросов включая первый None (MY_NONE)'''
     my_requests = []
     my_requests.append(client_prop.MY_NONE)
-
-    # res = connect_db('SELECT login FROM client')   # переделать под запрос на сервер
     my_requests.extend(li)
     return my_requests
 
 
 class Base_message():
+    ''' Базовый тип сообщения '''
     def __init__(self, action, msg=None, di=None):
+        ''' Инициализация базового сообщения'''
         self.di = {}
         self.di['time'] = datetime.datetime.now().strftime('%c')
         self.di['action'] = action
@@ -61,18 +68,9 @@ class Base_message():
         if di:
             self.di.update(di)
 
-
-    def from_not_server(self, new):
-        self.di['from'] = new
-
-
     def __repr__(self):
         return f"class {self.__class__.__name__} message type {self.di['action']} status {self.di['status']}"
     
-
-    def get_target(self):
-        return self.di['to']
-
     def __call__(self):
         return self.di
 

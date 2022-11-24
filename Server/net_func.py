@@ -1,3 +1,4 @@
+''' Функции для работы с сетью '''
 import json
 import datetime
 
@@ -7,29 +8,31 @@ from server_prop import AUTH_KEY
 
 
 def decoder(it):
+    ''' Декорирование пришедшего сообщения '''
     try:
         it = cript(it, encoding=False)
-        # print(f'befor json {it}')
         it = json.loads(it)
-        # print(f'befor cript {it}')
         return dict(it)
     except ValueError:
         return False
 
 
 def encoder(it):
+    ''' Кодирование пришедшего сообщения '''
     it = json.dumps(it)
     it = it.encode('utf-8')
     it = cript(it, encoding=True)
     return it
 
 def padding(it):
+    ''' Дополнение пробелами сообщения необходимо для шифрования '''
     count_space = (16 - len(it) % 16) % 16
     res = it + b' '*count_space
     return res
 
 
 def cript(it, encoding=True):
+    ''' Шифрование сообщений '''
     key = padding(AUTH_KEY)
     it = padding(it)
 
@@ -44,7 +47,9 @@ def cript(it, encoding=True):
 
 
 class Base_message():
+    ''' Базовый тип сообщений '''
     def __init__(self, action, msg=None, di=None):
+        ''' Инициализация базового сообщения '''
         self.di = {}
         self.di['time'] = datetime.datetime.now().strftime('%c')
         self.di['action'] = action
@@ -55,17 +60,8 @@ class Base_message():
         if di:
             self.di.update(di)
 
-
-    def from_not_server(self, new):
-        self.di['from'] = new
-
-
     def __repr__(self):
         return f"class {self.__class__.__name__} message type {self.di['action']} status {self.di['status']}"
-    
-
-    def get_target(self):
-        return self.di['to']
 
     def __call__(self):
         return self.di

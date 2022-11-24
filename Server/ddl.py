@@ -1,4 +1,4 @@
-# 
+''' Попытка перевода функционала с sql на sqlalchemy'''
 # !!!!!!!!!!!!устарело удалить после тестирования
 # tables = ['CREATE TABLE IF NOT EXISTS client(id SERIAL PRIMARY KEY, login char(32))',
 #         'CREATE TABLE IF NOT EXISTS user(id SERIAL PRIMARY KEY, login char(32), password char(32))',

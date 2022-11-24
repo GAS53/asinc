@@ -1,10 +1,15 @@
+''' Обработчик сообщений сервера '''
 import sqlite3
 
-from server_prop import DB_SERVER, SALT
+
 from hashlib import pbkdf2_hmac
+
+from server_prop import DB_SERVER, SALT
+import net_func
 
 
 def get_dbpswd(login):
+    ''' Получение пароля из базы по логину '''
     conn = sqlite3.connect(DB_SERVER)
     with conn:
         cur = conn.cursor()
@@ -12,26 +17,25 @@ def get_dbpswd(login):
         res = cur.fetchall()
         if res:
             db_id, db_login, db_pswd = res[0]
-            # db_pswd = db_pswd.encode('utf-8')
             return db_pswd
     return False
 
+
 def make_pswd(pswd):
+    ''' получения пароля на основании полученного от пользователя'''
     pswd = pswd.encode('utf-8')
     pswd = pbkdf2_hmac('sha256', pswd, SALT, 100000)
     return str(pswd)
 
 
-
 def identeficate(msg):
+    ''' идентификация пользователя '''
     if msg['action'] == 'handshake':
         try:
             login, pswd = msg['message']
             db_pswd = get_dbpswd(login)
             user_pswd = make_pswd(pswd)
-            print(type(db_pswd))
-            print(type(user_pswd))
-            if user_pswd == db_pswd and user_pswd!= None and db_pswd !=None:
+            if user_pswd == db_pswd and user_pswd != None and db_pswd != None:
                 print('пароль совпал')
                 return True, login
             else:
@@ -44,15 +48,57 @@ def identeficate(msg):
             return False, False
 
     else:
-        return False
+        return False, False
 
 
-def msg_redisign(msg):
-    ...
+def msg_sender(msg, conn_dict):
+    ''' Отсылка сообщения адресату или нескольким адресатам '''
+    recipients = msg['to']
+    byte_msg = net_func.encoder(msg)
+    if isinstance(recipients, list):
+        for send_login, conn in conn_dict.items():
+            if send_login in recipients:
+                conn.sendall(byte_msg)
+    else:
+       conn = conn_dict[recipients]
+       conn.sendall(byte_msg)
+
+
+def msg_routing(in_msg, inner_login, conn_dict):
+    ''' Обработчик сообщеиней идентифицированного пользователя '''
+    print(f'обработка входящего {in_msg}')
+
+    if in_msg['action'] == 'ping':
+        pre_msg = net_func.Base_message('re_ping')
+        msg = pre_msg()
+        msg['to'] = inner_login
+        msg['from'] = 'server'
+        msg['message'] = 'ping прошел успешно'
+    # elif in_msg['action'] == 'ping':
+    # !!!!!!!!!!!!!!
+
+
+
+
+
+    msg_sender(msg, conn_dict)
+
+
+
+
+
+def get_revers(di):
+    ''' Получения реверса словаря '''
+    new_di = {}
+    for k, v in di.items():
+        new_di[v] = k
+    return new_di
+
 
 
 
 def DDL():
+    ''' Создание новой базы данных '''
     print(DB_SERVER)
     conn = sqlite3.connect(DB_SERVER)
     with conn:
@@ -69,6 +115,7 @@ def DDL():
 
         for table in tables:
             cur.execute(table)
+
 
 if __name__ == '__main__':
     DDL()
