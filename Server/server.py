@@ -8,11 +8,11 @@ from time import sleep
 
 import server_prop
 import net_func
-from client_msg_redisign import identeficate, msg_redisign
+from client_msg_redisign import identeficate, msg_routing, get_revers
 
 
 logging.config.dictConfig(server_prop.server_log_config1)
-log = logging.getLogger(f'server')
+log = logging.getLogger('server')
 
 
 
@@ -115,28 +115,35 @@ class Main:
                         if conn not in self.outputs: # даем готовность к приему
                             self.outputs.append(conn)
                         log.info(f'начало обработки сообщения от клиента {data}')
-                        # print(f'from {client_addr[0]}')
                         data['from'] = client_addr[0]
-                        if self.ident.get(conn):
-                            msg_redisign(data)
+                        revers_ident = get_revers(self.ident)
+                        
+
+                        login = revers_ident.get(conn)
+                        print(self.ident)
+                        log.info(f'login from self.ident {login}')
+                        if login:
+                            msg_routing(data, login, self.ident)
                         else:
                             res, login = identeficate(data)
                             if not res:
-                                log.info('Переданое сообщение не распознано {data}')
+                                log.info(f'Переданое сообщение не распознано {data}')
                             elif res and not login:
-                                pre_msg = net_func.Base_message('ident_false','для проведения действий необходима идентификация. залогиньтесь.')
+                                pre_msg = net_func.Base_message('ident_false', 'для проведения действий необходима идентификация. залогиньтесь.')
                                 msg = pre_msg()
                                 msg['to'] = data['from']
                                 msg['from'] = 'server'
                                 conn.sendall(net_func.encoder(msg))
-                                # self.server_sock.sendall(net_func.encoder(msg))
-                            
-                            else:
-                                self.ident[conn] = login
+
+                            elif login and res:
+                                log.info(f'идентификация прошла успешно {data}')
+                                self.ident[login] = conn
                                 pre_msg = net_func.Base_message('ident_ok', login)
                                 msg = pre_msg()
 
                                 conn.sendall(net_func.encoder(msg))
+                            else:
+                                print(f'что-то непонятное {msg}')
 
                     else:
                         log.info(f'Передан не словарь клиент отключен {data}')
@@ -154,5 +161,5 @@ class Main:
 
 
 if __name__ == '__main__':
-    M = Main(12538)
+    M = Main(12541)
     M.run()

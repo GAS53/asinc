@@ -31,9 +31,11 @@ def login_required(login):
     return wrap2
 
 class MainWindow(QWidget):
+    """ Создание и управление базой данных sqlite. """
     
 
     def __init__(self, port):
+        """ __init__dfdfgd"""
         super().__init__()
         self.init_socket(port)
         self.msg_for_send = Queue()
@@ -101,6 +103,7 @@ class MainWindow(QWidget):
         self.show()
 
     def identification_click(self):
+        """ Создание подключения к базе данных """
         dlg = Widgets.QDialog(self)
         dlg.resize(322, 320)
         im, _ = QInputDialog.getText(self, 'Логин', 'Введите логин')
@@ -114,6 +117,7 @@ class MainWindow(QWidget):
 
     # @login_required(login)
     def clicked_send(self):
+        """ Создание подключения к базе данных 2222"""
         if self.login:
             if not self.radioButton_1.isChecked() and not self.radioButton_2.isChecked() and not self.radioButton_3.isChecked():
                 self.textEdit.setText('не выбрано сообщение/запрос')
@@ -191,8 +195,14 @@ class MainWindow(QWidget):
                 self.textEdit.setText(f'идентификация {data["message"]} прошла успешно')
                 self.login = data["message"]
                 print(self.login)
-            elif data["action"] == 'ident_false':
+            elif data["action"] == 'ident_false' or data["action"] == 're_ping':
                 self.textEdit.setText(data["message"])
+            
+
+
+
+            else:
+                print(f'получено неизвестное сообщеине {data}')
                 
 
 
@@ -205,5 +215,5 @@ class MainWindow(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    M = MainWindow(12538)
+    M = MainWindow(12541)
     sys.exit(app.exec())
